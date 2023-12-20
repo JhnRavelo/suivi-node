@@ -25,3 +25,5 @@ const usersRouter = require("./routers/usersRouter");
 app.use("/auth", usersRouter);
 const refreshRouter = require("./routers/refreshRouter");
 app.use("/refresh", refreshRouter);
+const productTypesRouter = require("./routers/productTypesRouter")
+app.use("/productType", productTypesRouter)
