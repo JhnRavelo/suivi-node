@@ -6,7 +6,7 @@ const db = require("./database/models");
 
 const app = express();
 
-db.sequelize.sync().then(() => {
+db.sequelize.sync({alter: true}).then(() => {
   app.listen(process.env.SERVER_PORT, () => {
     console.log(`http://localhost:${process.env.SERVER_PORT}`);
   });
@@ -27,3 +27,5 @@ const refreshRouter = require("./routers/refreshRouter");
 app.use("/refresh", refreshRouter);
 const productTypesRouter = require("./routers/productTypesRouter")
 app.use("/productType", productTypesRouter)
+const products = require("./routers/productsRouter")
+app.use("/product", products)

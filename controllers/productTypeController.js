@@ -1,7 +1,7 @@
 const { productTypes } = require("../database/models");
 
 const getAllProductTypes = async (req, res) => {
-  const allProductTypes = await productTypes.finAll();
+  const allProductTypes = await productTypes.findAll();
 
   if (!allProductTypes) return res.json({ success: false });
 

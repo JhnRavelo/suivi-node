@@ -7,10 +7,17 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
     },
     name: {
-        type: DataTypes.STRING,
-        allowNull: false
-    }
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
   });
 
-  return productTypes
+  productTypes.associate = (models) => {
+    productTypes.hasMany(models.products, {
+      onDelete: "CASCADE",
+      foreignKey: "productTypeId",
+    });
+  };
+
+  return productTypes;
 };
