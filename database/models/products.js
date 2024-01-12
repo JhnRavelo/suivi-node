@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     detail: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
   });
 
@@ -29,6 +29,10 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: "CASCADE",
       foreignKey: "productTypeId",
     });
+    products.hasMany(models.suivis, {
+      onDelete: "CASCADE",
+      foreignKey: "productId"
+    })
   };
 
   return products;
