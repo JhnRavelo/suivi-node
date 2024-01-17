@@ -27,4 +27,29 @@ const getByProduct = async (req, res) => {
   res.json({ success: true, suivis: allSuivi });
 };
 
-module.exports = { getByProduct };
+const addSuivi = async (req, res)=>{
+  const {productId, problem, solution, observation} = await req.body
+
+  if(!productId || !problem || !solution || !observation) return res.json({success: false})
+
+  const newSuivi = await suivis.create({
+    productId,
+    problem,
+    solution,
+    observation
+  })
+
+  if(!newSuivi) return res.json({success: false})
+
+  const allSuivi = await suivis.findAll({
+    where: {
+      productId: productId,
+    },
+  });
+
+  if (!allSuivi) return res.json({ success: false });
+
+  res.json({ success: true, suivis: allSuivi });
+}
+
+module.exports = { getByProduct, addSuivi };
