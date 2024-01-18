@@ -62,6 +62,11 @@ module.exports = (sequelize, DataTypes) => {
 
     return refreshToken;
   };
+  users.associate = (models) => {
+    users.hasMany(models.suivis, {
+      foreignKey: "userId",
+    });
+  };
 
   return users;
 };

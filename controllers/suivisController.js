@@ -1,4 +1,4 @@
-const { Op, where } = require("sequelize");
+const { Op } = require("sequelize");
 const { users, suivis, products, productTypes } = require("../database/models");
 
 const getByProduct = async (req, res) => {
@@ -20,6 +20,7 @@ const getByProduct = async (req, res) => {
     where: {
       productId: id,
     },
+    include: [{ model: users, attribute: ["id", "name"] }],
   });
 
   if (!allSuivi) return res.json({ success: false });
@@ -44,8 +45,10 @@ const getByProduct = async (req, res) => {
 
 const addSuivi = async (req, res) => {
   const { productId, problem, solution, observation } = await req.body;
+  const userId = await req.user;
 
-  if (!productId || !problem || !solution || !observation)
+  console.log(userId);
+  if (!productId || !problem || !solution || !userId)
     return res.json({ success: false });
 
   const newSuivi = await suivis.create({
@@ -53,19 +56,21 @@ const addSuivi = async (req, res) => {
     problem,
     solution,
     observation,
+    userId,
   });
 
   if (!newSuivi) return res.json({ success: false });
 
-  const allSuivi = await suivis.findAll({
+  const allSuivis = await suivis.findAll({
     where: {
       productId: productId,
     },
+    include: [{ model: users, attribute: ["id", "name"] }],
   });
 
-  if (!allSuivi) return res.json({ success: false });
+  if (!allSuivis) return res.json({ success: false });
 
-  res.json({ success: true, suivis: allSuivi });
+  res.json({ success: true, suivis: allSuivis });
 };
 
 module.exports = { getByProduct, addSuivi };

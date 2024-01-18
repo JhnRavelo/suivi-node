@@ -25,6 +25,9 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "CASCADE",
         foreignKey: "productId",
       });
+      suivis.belongsTo(models.users, {
+        foreignKey: "userId",
+      });
     };
   
     return suivis;
