@@ -73,4 +73,31 @@ const addSuivi = async (req, res) => {
   res.json({ success: true, suivis: allSuivis });
 };
 
-module.exports = { getByProduct, addSuivi };
+const deleteSuivi = async (req, res) => {
+  const {deleteId, productId} = await req.body
+
+  if(!deleteId || !productId) return res.json({success: false})
+
+  const deleteSuivi = await suivis.findOne({
+    where: {
+      id: deleteId
+    }
+  })
+
+  if(!deleteSuivi) return res.json({success: false})
+
+  const result = await deleteSuivi.destroy()
+
+  if(!result) return res.json({success: false})
+
+  const allSuivis = await suivis.findAll({
+    where: {
+      productId: productId,
+    },
+    include: [{ model: users, attribute: ["id", "name"] }],
+  });
+
+  res.json({success: true, suivis: allSuivis})
+}
+
+module.exports = { getByProduct, addSuivi, deleteSuivi };
