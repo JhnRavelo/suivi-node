@@ -70,23 +70,69 @@ const addSuivi = async (req, res) => {
 
   if (!allSuivis) return res.json({ success: false });
 
-  res.json({ success: true, suivis: allSuivis });
+  res.json({ success: true, suivis: allSuivis, id: newSuivi.dataValues.id });
 };
 
 const deleteSuivi = async (req, res) => {
-  const {deleteId, productId} = await req.body
+  const { deleteId, productId } = await req.body;
 
-  if(!deleteId || !productId) return res.json({success: false})
+  if (!deleteId || !productId) return res.json({ success: false });
 
   const deleteSuivi = await suivis.findOne({
     where: {
-      id: deleteId
+      id: deleteId,
+    },
+  });
+
+  if (!deleteSuivi) return res.json({ success: false });
+
+  const result = await deleteSuivi.destroy();
+
+  if (!result) return res.json({ success: false });
+
+  const allSuivis = await suivis.findAll({
+    where: {
+      productId: productId,
+    },
+    include: [{ model: users, attribute: ["id", "name"] }],
+  });
+
+  res.json({ success: true, suivis: allSuivis });
+};
+
+const uploadImageSuivi = async (req, res) => {
+  const {id, productId} = await req.body
+
+  let gallery = "null"
+
+  if(!id) return res.json({success: false})
+
+  const addedSuivi = await suivis.findOne({
+    where: {
+      id: id
     }
   })
 
-  if(!deleteSuivi) return res.json({success: false})
+  if(!id) return res.json({success: false})
 
-  const result = await deleteSuivi.destroy()
+  if (req?.files) {
+    const galleryArray = new Array();
+    req.files.map((file) => {
+      console.log(file.mimetype);
+      if (file.mimetype.split("/")[0] == "image") {
+        galleryArray.push(
+          `${process.env.SERVER_PATH}/img/${file.filename}`
+        );
+      }
+    });
+    gallery = galleryArray.join(",");
+  }
+
+  let observation = addedSuivi.dataValues.observation
+
+  addedSuivi.observation = `${observation};${gallery}`
+
+  const result = await addedSuivi.save()
 
   if(!result) return res.json({success: false})
 
@@ -97,7 +143,7 @@ const deleteSuivi = async (req, res) => {
     include: [{ model: users, attribute: ["id", "name"] }],
   });
 
-  res.json({success: true, suivis: allSuivis})
-}
+  res.json({ success: true, suivis: allSuivis });
+};
 
-module.exports = { getByProduct, addSuivi, deleteSuivi };
+module.exports = { getByProduct, addSuivi, deleteSuivi, uploadImageSuivi };

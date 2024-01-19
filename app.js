@@ -12,6 +12,8 @@ db.sequelize.sync({alter: true}).then(() => {
   });
 });
 
+app.use(express.static("public"));
+
 app.use(
   cors({
     credentials: true,
@@ -21,6 +23,8 @@ app.use(
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 
+const suivisRouter = require("./routers/suivisRouter")
+app.use("/suivi", suivisRouter)
 const usersRouter = require("./routers/usersRouter");
 app.use("/auth", usersRouter);
 const refreshRouter = require("./routers/refreshRouter");
@@ -29,5 +33,3 @@ const productTypesRouter = require("./routers/productTypesRouter")
 app.use("/productType", productTypesRouter)
 const productsRouter = require("./routers/productsRouter")
 app.use("/product", productsRouter)
-const suivisRouter = require("./routers/suivisRouter")
-app.use("/suivi", suivisRouter)
