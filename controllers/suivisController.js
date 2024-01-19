@@ -47,7 +47,6 @@ const addSuivi = async (req, res) => {
   const { productId, problem, solution, observation } = await req.body;
   const userId = await req.user;
 
-  console.log(userId);
   if (!productId || !problem || !solution || !userId)
     return res.json({ success: false });
 
@@ -61,16 +60,7 @@ const addSuivi = async (req, res) => {
 
   if (!newSuivi) return res.json({ success: false });
 
-  const allSuivis = await suivis.findAll({
-    where: {
-      productId: productId,
-    },
-    include: [{ model: users, attribute: ["id", "name"] }],
-  });
-
-  if (!allSuivis) return res.json({ success: false });
-
-  res.json({ success: true, suivis: allSuivis, id: newSuivi.dataValues.id });
+  res.json({ success: true, id: newSuivi.dataValues.id });
 };
 
 const deleteSuivi = async (req, res) => {
@@ -101,40 +91,41 @@ const deleteSuivi = async (req, res) => {
 };
 
 const uploadImageSuivi = async (req, res) => {
-  const {id, productId} = await req.body
+  const { id, productId } = await req.body;
+  console.log(req.files);
 
-  let gallery = "null"
+  let gallery = "null";
 
-  if(!id) return res.json({success: false})
+  if (!id) return res.json({ success: false });
 
   const addedSuivi = await suivis.findOne({
     where: {
-      id: id
-    }
-  })
+      id: id,
+    },
+  });
 
-  if(!id) return res.json({success: false})
+  if (!id) return res.json({ success: false });
 
-  if (req?.files) {
+  if (req?.files?.length) {
     const galleryArray = new Array();
     req.files.map((file) => {
       console.log(file.mimetype);
       if (file.mimetype.split("/")[0] == "image") {
-        galleryArray.push(
-          `${process.env.SERVER_PATH}/img/${file.filename}`
-        );
+        galleryArray.push(`${process.env.SERVER_PATH}/img/${file.filename}`);
       }
     });
     gallery = galleryArray.join(",");
+  } else if (!req?.files?.length && req?.files) {
+    gallery = `${process.env.SERVER_PATH}/img/${req.files.filename}`;
   }
 
-  let observation = addedSuivi.dataValues.observation
+  let observation = addedSuivi.dataValues.observation;
 
-  addedSuivi.observation = `${observation};${gallery}`
+  addedSuivi.observation = `${observation};${gallery}`;
 
-  const result = await addedSuivi.save()
+  const result = await addedSuivi.save();
 
-  if(!result) return res.json({success: false})
+  if (!result) return res.json({ success: false });
 
   const allSuivis = await suivis.findAll({
     where: {
