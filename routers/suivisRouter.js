@@ -18,7 +18,12 @@ const stokage = multer.diskStorage({
   },
   filename: (req, file, callback) => {
     const date = new Date();
-    callback(null, `${file.originalname}-${date.getDay()}-${date.getTime()}.png`);
+    callback(
+      null,
+      `${file.originalname}-${date.getDay()}-${
+        date.getMonth() + 1
+      }-${date.getFullYear()}-${date.getTime()}.png`
+    );
   },
 });
 
