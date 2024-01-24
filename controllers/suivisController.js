@@ -6,14 +6,6 @@ const path = require("path");
 
 const imgPath = path.join(__dirname, "..", "public", "img");
 
-const imgDelete = path.join(
-  __dirname,
-  "..",
-  "public",
-  "img",
-  "image0-3-1-2024-1706073017951.png"
-);
-
 const getByProduct = async (req, res) => {
   const { email, id } = await req.body;
 
@@ -105,7 +97,6 @@ const deleteSuivi = async (req, res) => {
           console.log(err);
         }
       });
-      // console.log(name, "ARRAY");
     });
   } else if (!galleryArray && galleryString && galleryString != "null") {
     let name = galleryString.split("/")[galleryString.split("/").length - 1];
@@ -151,46 +142,18 @@ const uploadImageSuivi = async (req, res) => {
     const galleryArray = new Array();
     response = req.files.map(async (file) => {
       if (file.mimetype.split("/")[0] == "image") {
-        await sharp(file.path)
-          .webp()
-          .toFile(`${imgPath}/${file.filename.split(".")[0]}.webp`);
-        galleryArray.push(
-          `${process.env.SERVER_PATH}/img/${file.filename.split(".")[0]}.webp`
-        );
+        let date = new Date();
+        let filename = `${file.originalname.split(".")[0]}-${date.getDate()}-${
+          date.getMonth() + 1
+        }-${date.getFullYear()}-${date.getTime()}.webp`;
+        let webpData = await sharp(file.buffer).webp().toBuffer();
+        let webpFilePath = path.join(imgPath, filename);
+        fs.writeFileSync(webpFilePath, webpData);
+        galleryArray.push(`${process.env.SERVER_PATH}/img/${filename}`);
       }
     });
     await Promise.all(response);
     gallery = galleryArray.join(",");
-  }
-
-  if (gallery !== "null") {
-    fs.readdir(imgPath, (err, files) => {
-      if (err) {
-        console.error("Erreur lors de la lecture du dossier :", err);
-      }
-
-      // Filtrer les fichiers PNG
-      const pngFiles = files.filter(
-        (file) => path.extname(file).toLowerCase() === ".png"
-      );
-      if (pngFiles) {
-        // Supprimer chaque fichier PNG
-        pngFiles.forEach((pngFile) => {
-          const filePath = path.join(imgPath, pngFile);
-
-          fs.unlink(filePath, (err) => {
-            if (err) {
-              console.error(
-                `Erreur lors de la suppression de ${pngFile} :`,
-                err
-              );
-            } else {
-              console.log(`${pngFile} a été supprimé avec succès.`);
-            }
-          });
-        });
-      }
-    });
   }
 
   let observation = addedSuivi.dataValues.observation;
@@ -211,37 +174,10 @@ const uploadImageSuivi = async (req, res) => {
   res.json({ success: true, suivis: allSuivis });
 };
 
-const deletePNG = async () => {
-  fs.readdir(imgPath, (err, files) => {
-    if (err) {
-      console.error("Erreur lors de la lecture du dossier :", err);
-    }
-
-    // Filtrer les fichiers PNG
-    const pngFiles = files.filter(
-      (file) => path.extname(file).toLowerCase() === ".png"
-    );
-    if (pngFiles) {
-      // Supprimer chaque fichier PNG
-      pngFiles.forEach((pngFile) => {
-        const filePath = path.join(imgPath, pngFile);
-
-        fs.unlink(filePath, (err) => {
-          if (err) {
-            console.error(`Erreur lors de la suppression de ${pngFile} :`, err);
-          } else {
-            console.log(`${pngFile} a été supprimé avec succès.`);
-          }
-        });
-      });
-    }
-  });
-};
 
 module.exports = {
   getByProduct,
   addSuivi,
   deleteSuivi,
   uploadImageSuivi,
-  deletePNG,
 };
