@@ -5,6 +5,7 @@ const {
   addSuivi,
   deleteSuivi,
   uploadImageSuivi,
+  deletePNG,
 } = require("../controllers/suivisController");
 const router = express.Router();
 const multer = require("multer");
@@ -20,7 +21,7 @@ const stokage = multer.diskStorage({
     const date = new Date();
     callback(
       null,
-      `${file.originalname}-${date.getDay()}-${
+      `${file.originalname.split(".")[0]}-${date.getDate()}-${
         date.getMonth() + 1
       }-${date.getFullYear()}-${date.getTime()}.png`
     );
