@@ -59,7 +59,7 @@ const addSuivi = async (req, res) => {
     productId,
     problem,
     solution,
-    observation: `${observation};`,
+    observation: `${observation ? observation : ""};`,
     userId,
   });
 
@@ -196,10 +196,8 @@ const updateSuivi = async (req, res) => {
       solution,
       observation: updatedObservation,
     });
-    const result = await updatedSuivi.save()
+    const result = await updatedSuivi.save();
     if (!result) return res.json({ success: false });
-
-    // console.log(result.dataValues)
 
     const allSuivis = await suivis.findAll({
       where: {
@@ -215,10 +213,106 @@ const updateSuivi = async (req, res) => {
   }
 };
 
+const updateUpload = async (req, res) => {
+  const { id, productId } = await req.body;
+  let updateGalleryArray;
+  let newGallery;
+  let observation;
+  try {
+    if (!id || !productId) return res.json({ success: false });
+
+    const updatedUpload = await suivis.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!updatedUpload) return res.json({ success: false });
+
+    observation = updatedUpload.dataValues.observation?.split(";")[0]
+
+    if (req?.files?.length) {
+      const newGalleryArray = new Array();
+      const response = req.files.map(async (file) => {
+        if (file.mimetype.split("/")[0] == "image") {
+          let date = new Date();
+          let filename = `${
+            file.originalname.split(".")[0]
+          }-${date.getDate()}-${
+            date.getMonth() + 1
+          }-${date.getFullYear()}-${date.getTime()}.webp`;
+          let webpData = await sharp(file.buffer).webp().toBuffer();
+          let webpFilePath = path.join(imgPath, filename);
+          fs.writeFileSync(webpFilePath, webpData);
+          newGalleryArray.push(`${process.env.SERVER_PATH}/img/${filename}`);
+        }
+      });
+      await Promise.all(response);
+      newGallery = newGalleryArray.join(",");
+    }
+
+    const updateGalleryString =
+      updatedUpload.dataValues.observation.split(";")[1];
+
+    if (updateGalleryString && updateGalleryString != "null") {
+      updateGalleryArray = updateGalleryString.split(",");
+    }
+
+    if (updateGalleryArray) {
+      updateGalleryArray.map((gallery) => {
+        let name = gallery.split("/")[gallery.split("/").length - 1];
+        let pathFile = path.join(imgPath, name);
+        fs.unlinkSync(pathFile, (err) => {
+          if (err) {
+            console.log(err);
+          }
+        });
+      });
+    } else if (
+      !updateGalleryArray &&
+      updateGalleryString &&
+      updateGalleryString != "null"
+    ) {
+      let name =
+        updateGalleryString.split("/")[
+          updateGalleryString.split("/").length - 1
+        ];
+      let pathFile = path.join(imgPath, name);
+      fs.unlinkSync(pathFile, (err) => {
+        if (err) {
+          console.log(err);
+        }
+      });
+    }
+
+    updatedUpload.observation = `${observation};${newGallery}`
+
+    const result = await updatedUpload.save()
+
+    if(!result) return res.json({success: false})
+
+    const allSuivis = await suivis.findAll({
+      where: {
+        productId: productId,
+      },
+      include: [{ model: users, attribute: ["id", "name"] }],
+    });
+
+    if(!allSuivis) return res.json({success: false})
+
+    res.json({ success: true, suivis: allSuivis });
+
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false });
+  }
+};
+
 module.exports = {
   getByProduct,
   addSuivi,
   deleteSuivi,
   uploadImageSuivi,
   updateSuivi,
+  updateUpload,
 };
