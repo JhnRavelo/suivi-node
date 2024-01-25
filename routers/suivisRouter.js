@@ -4,7 +4,8 @@ const {
   getByProduct,
   addSuivi,
   deleteSuivi,
-  uploadImageSuivi
+  uploadImageSuivi,
+  updateSuivi
 } = require("../controllers/suivisController");
 const router = express.Router();
 const multer = require("multer");
@@ -15,5 +16,6 @@ router.put("/upload", memoryStokage.any(), uploadImageSuivi);
 router.post("/getByProduct", verifyJWT, getByProduct);
 router.post("/addSuivi", verifyJWT, addSuivi);
 router.post("/delete", verifyJWT, deleteSuivi);
+router.put("/updateSuivi", verifyJWT, updateSuivi);
 
 module.exports = router;

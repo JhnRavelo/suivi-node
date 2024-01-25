@@ -59,13 +59,20 @@ const addSuivi = async (req, res) => {
     productId,
     problem,
     solution,
-    observation,
+    observation: `${observation};`,
     userId,
   });
 
   if (!newSuivi) return res.json({ success: false });
 
-  res.json({ success: true, id: newSuivi.dataValues.id });
+  const allSuivis = await suivis.findAll({
+    where: {
+      productId: productId,
+    },
+    include: [{ model: users, attribute: ["id", "name"] }],
+  });
+
+  res.json({ success: true, id: newSuivi.dataValues.id, suivis: allSuivis });
 };
 
 const deleteSuivi = async (req, res) => {
@@ -174,10 +181,44 @@ const uploadImageSuivi = async (req, res) => {
   res.json({ success: true, suivis: allSuivis });
 };
 
+const updateSuivi = async (req, res) => {
+  const { id, productId, problem, observation, solution } = await req.body;
+  try {
+    if (!id || !productId || !problem || !solution)
+      return res.json({ success: false });
+
+    const updatedSuivi = await suivis.findOne({ where: { id: id } });
+    let updatedObservation = `${observation};${
+      updatedSuivi.dataValues.observation.split(";")[1]
+    }`;
+    updatedSuivi.set({
+      problem,
+      solution,
+      observation: updatedObservation,
+    });
+    const result = await updatedSuivi.save()
+    if (!result) return res.json({ success: false });
+
+    // console.log(result.dataValues)
+
+    const allSuivis = await suivis.findAll({
+      where: {
+        productId: productId,
+      },
+      include: [{ model: users, attribute: ["id", "name"] }],
+    });
+
+    res.json({ success: true, suivis: allSuivis });
+  } catch (error) {
+    res.json({ success: false });
+    console.log(error);
+  }
+};
 
 module.exports = {
   getByProduct,
   addSuivi,
   deleteSuivi,
   uploadImageSuivi,
+  updateSuivi,
 };
