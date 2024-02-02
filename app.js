@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser")
 const bodyParser = require("body-parser");
 require("dotenv").config();
 const db = require("./database/models");
@@ -13,10 +14,11 @@ db.sequelize.sync({alter: true}).then(() => {
 });
 
 app.use(express.static("public"));
-
+app.use(cookieParser())
 app.use(
   cors({
     credentials: true,
+    origin: ["http://localhost:5173"]
   })
 );
 
