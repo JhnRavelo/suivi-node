@@ -1,7 +1,9 @@
 const { products } = require("../database/models");
 
 const addProduct = async (req, res) => {
-  const { type, location, devis, detail, dimension } = await req.body;
+  const { type, location, devis, detail, dimension, client, chantier } = await req.body;
+
+  const id = req.user;
 
   if (!type || !location || !devis || !dimension)
     return res.json({ success: false });
@@ -12,6 +14,9 @@ const addProduct = async (req, res) => {
     detail,
     devis,
     dimension,
+    userProductId: id,
+    client,
+    chantier
   });
 
   if (!productAdded) return res.json({ success: false });
