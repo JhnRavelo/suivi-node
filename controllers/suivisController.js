@@ -43,6 +43,8 @@ const getByProduct = async (req, res) => {
     { label: "Devis", value: product.dataValues.devis },
     { label: "Emplacement", value: product.dataValues.location },
     { label: "Détails", value: product.dataValues.detail },
+    {label: "Client", value: product.dataValues.client},
+    {label: "Chantier", value: product.dataValues.chantier}
   ];
 
   res.json({ success: true, suivis: allSuivi, product: fiche });
@@ -165,7 +167,7 @@ const uploadImageSuivi = async (req, res) => {
 
   let observation = addedSuivi.dataValues.observation;
 
-  addedSuivi.observation = `${observation};${gallery}`;
+  addedSuivi.observation = `${observation}${gallery}`;
 
   const result = await addedSuivi.save();
 
