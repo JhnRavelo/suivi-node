@@ -66,6 +66,9 @@ module.exports = (sequelize, DataTypes) => {
     users.hasMany(models.suivis, {
       foreignKey: "userId",
     });
+    users.hasMany(models.products, {
+      foreignKey: "userProductId",
+    });
   };
 
   return users;

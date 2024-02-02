@@ -22,6 +22,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    client: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    chantier: {
+      type: DataTypes.STRING,
+      allowNull: false
+    }
   });
 
   products.associate = (models) => {
@@ -31,8 +39,9 @@ module.exports = (sequelize, DataTypes) => {
     });
     products.hasMany(models.suivis, {
       onDelete: "CASCADE",
-      foreignKey: "productId"
-    })
+      foreignKey: "productId",
+    });
+    products.belongsTo(models.users, { foreignKey: "userProductId" });
   };
 
   return products;
