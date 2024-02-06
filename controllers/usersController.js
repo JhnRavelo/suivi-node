@@ -147,8 +147,8 @@ const userLoginWeb = async (req, res) => {
       success: true,
       accessToken,
       role,
-      name: userLogged.name,
-      email: userLogged.email,
+      name: userLogged.dataValues.name,
+      email: userLogged.dataValues.email,
     });
 
   } catch (error) {
@@ -157,4 +157,37 @@ const userLoginWeb = async (req, res) => {
   }
 };
 
-module.exports = { login, logout, userRead, userLoginWeb };
+const userLogoutWeb = async (req, res) => {
+  const cookie = req.cookies;
+
+  if (!cookie?.jwt_ea_suivi) return res.json({success: false});
+
+  const refreshToken = cookie.jwt_ea_suivi;
+
+  const user = await users.findOne({
+    where: {
+      refreshToken: refreshToken,
+    },
+  });
+
+  if (!user) {
+    res.clearCookie("jwt_ea_suivi", {
+      httpOnly: true,
+      sameSite: "None",
+      secure: true,
+    });
+    return res.json({success: false});
+  }
+  console.log("vider");
+  user.refreshToken = "";
+  await user.save();
+
+  res.clearCookie("jwt_ea_suivi", {
+    httpOnly: true,
+    sameSite: "None",
+    secure: true,
+  });
+  res.json({success: true})
+}
+
+module.exports = { login, logout, userRead, userLoginWeb, userLogoutWeb };
