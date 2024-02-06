@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { users, suivis, products, productTypes } = require("../database/models");
+const { users, suivis, products, productTypes, logs } = require("../database/models");
 const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
@@ -66,6 +66,8 @@ const addSuivi = async (req, res) => {
   });
 
   if (!newSuivi) return res.json({ success: false });
+
+  await logs.create({suiviId: newSuivi.dataValues.id})
 
   const allSuivis = await suivis.findAll({
     where: {
