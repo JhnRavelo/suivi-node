@@ -134,7 +134,13 @@ const handleRefreshToken = async (req, res) => {
           maxAge: 24 * 60 * 60 * 1000,
         });
 
-        res.json({ role, accessToken });
+        res.json({
+          success: true,
+          role,
+          accessToken,
+          name: user.name,
+          email: user.email,
+        });
       }
     );
   } catch (error) {
