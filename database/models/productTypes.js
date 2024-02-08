@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    pdf: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    }
   });
 
   productTypes.associate = (models) => {
