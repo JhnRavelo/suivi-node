@@ -29,7 +29,7 @@ const getLogs = async (req, res) => {
     if (!allLogs) return res.json({ success: false });
 
     let filterLogs = []
-    let logs = []
+    let logsAll = []
 
     allLogs.map((log) => {
       let value = log.dataValues;
@@ -43,7 +43,7 @@ const getLogs = async (req, res) => {
           )}`
         );
       }
-      logs.push(`${value.suivi.user.name} a effectué un suivi du produit ${
+      logsAll.push(`${value.suivi.user.name} a effectué un suivi du produit ${
         value.suivi.product.productType.name
       } du devis ${value.suivi.product.devis};${value.createdAt.slice(
         0,
