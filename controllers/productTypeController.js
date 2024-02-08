@@ -24,7 +24,7 @@ const getAllProductTypes = async (req, res) => {
 const addProductType = async (req, res) => {
   try {
     const { name } = await req.body;
-    const pdfBuffer = req.files[0].buffer;
+    const pdfBuffer = req.files[0]?.buffer;
     let imagePaths = [];
     let imageFiles = [];
     let newPDF;
@@ -35,7 +35,7 @@ const addProductType = async (req, res) => {
       const date = new Date();
       const prefix = `${originalname}-${date.getDate()}-${
         date.getMonth() + 1
-      }-${date.getFullYear()}`
+      }-${date.getFullYear()}`;
       const options = {
         format: "jpg",
         out_dir: pdfOutput,
@@ -107,4 +107,47 @@ const addProductType = async (req, res) => {
   }
 };
 
-module.exports = { getAllProductTypes, addProductType };
+const deleteProductType = async (req, res) => {
+  const id = await req?.params?.id;
+  try {
+    if (!id) return res.json({ success: false });
+
+    const deletedProductType = await productTypes.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (deletedProductType.dataValues?.pdf) {
+      const arrayProductTypes =
+        deletedProductType.dataValues.pdf.split(",");
+      arrayProductTypes.map((item) => {
+        let name = item.split("/")[item.split("/").length - 1];
+        let deltePath = path.join(pdfOutput, name);
+        fs.unlinkSync(deltePath, (err) => {
+          if (err) {
+            console.log(err);
+          }
+        });
+      });
+    }
+
+    const result = await deletedProductType.destroy();
+
+    if (!result) return res.json({ success: false });
+
+    const allProductTypes = await productTypes.findAll();
+
+    if (!allProductTypes) return res.json({ success: false });
+
+    res.json({ success: true, types: allProductTypes });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+module.exports = {
+  getAllProductTypes,
+  addProductType,
+  deleteProductType,
+};
