@@ -1,5 +1,11 @@
 const { Op } = require("sequelize");
-const { users, suivis, products, productTypes, logs } = require("../database/models");
+const {
+  users,
+  suivis,
+  products,
+  productTypes,
+  logs,
+} = require("../database/models");
 const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
@@ -38,20 +44,27 @@ const getByProduct = async (req, res) => {
   });
 
   const fiche = [
-    { label: "Type de ménuiserie", value: product.dataValues.productType.name },
-    { label: "Hauteur et Largeur", value: product.dataValues.dimension },
+    {
+      label: "Type de ménuiserie",
+      value: product.dataValues.productType.name,
+    },
+    {
+      label: "Hauteur et Largeur",
+      value: product.dataValues.dimension,
+    },
     { label: "Devis", value: product.dataValues.devis },
     { label: "Emplacement", value: product.dataValues.location },
     { label: "Détails", value: product.dataValues.detail },
-    {label: "Client", value: product.dataValues.client},
-    {label: "Chantier", value: product.dataValues.chantier}
+    { label: "Client", value: product.dataValues.client },
+    { label: "Chantier", value: product.dataValues.chantier },
   ];
 
   res.json({ success: true, suivis: allSuivi, product: fiche });
 };
 
 const addSuivi = async (req, res) => {
-  const { productId, problem, solution, observation } = await req.body;
+  const { productId, problem, solution, observation } =
+    await req.body;
   const userId = await req.user;
 
   if (!productId || !problem || !solution || !userId)
@@ -67,7 +80,7 @@ const addSuivi = async (req, res) => {
 
   if (!newSuivi) return res.json({ success: false });
 
-  await logs.create({suiviId: newSuivi.dataValues.id})
+  await logs.create({ suiviId: newSuivi.dataValues.id });
 
   const allSuivis = await suivis.findAll({
     where: {
@@ -76,7 +89,11 @@ const addSuivi = async (req, res) => {
     include: [{ model: users, attribute: ["id", "name"] }],
   });
 
-  res.json({ success: true, id: newSuivi.dataValues.id, suivis: allSuivis });
+  res.json({
+    success: true,
+    id: newSuivi.dataValues.id,
+    suivis: allSuivis,
+  });
 };
 
 const deleteSuivi = async (req, res) => {
@@ -93,7 +110,8 @@ const deleteSuivi = async (req, res) => {
 
   if (!deleteSuivi) return res.json({ success: false });
 
-  const galleryString = deleteSuivi.dataValues.observation.split(";")[1];
+  const galleryString =
+    deleteSuivi.dataValues.observation.split(";")[1];
 
   if (galleryString && galleryString != "null") {
     galleryArray = galleryString.split(",");
@@ -109,8 +127,13 @@ const deleteSuivi = async (req, res) => {
         }
       });
     });
-  } else if (!galleryArray && galleryString && galleryString != "null") {
-    let name = galleryString.split("/")[galleryString.split("/").length - 1];
+  } else if (
+    !galleryArray &&
+    galleryString &&
+    galleryString != "null"
+  ) {
+    let name =
+      galleryString.split("/")[galleryString.split("/").length - 1];
     let pathFile = path.join(imgPath, name);
     fs.unlinkSync(pathFile, (err) => {
       if (err) {
@@ -154,13 +177,17 @@ const uploadImageSuivi = async (req, res) => {
     response = req.files.map(async (file) => {
       if (file.mimetype.split("/")[0] == "image") {
         let date = new Date();
-        let filename = `${file.originalname.split(".")[0]}-${date.getDate()}-${
+        let filename = `${
+          file.originalname.split(".")[0]
+        }-${date.getDate()}-${
           date.getMonth() + 1
         }-${date.getFullYear()}-${date.getTime()}.webp`;
         let webpData = await sharp(file.buffer).webp().toBuffer();
         let webpFilePath = path.join(imgPath, filename);
         fs.writeFileSync(webpFilePath, webpData);
-        galleryArray.push(`${process.env.SERVER_PATH}/img/${filename}`);
+        galleryArray.push(
+          `${process.env.SERVER_PATH}/img/${filename}`
+        );
       }
     });
     await Promise.all(response);
@@ -186,7 +213,8 @@ const uploadImageSuivi = async (req, res) => {
 };
 
 const updateSuivi = async (req, res) => {
-  const { id, productId, problem, observation, solution } = await req.body;
+  const { id, productId, problem, observation, solution } =
+    await req.body;
   try {
     if (!id || !productId || !problem || !solution)
       return res.json({ success: false });
@@ -233,7 +261,7 @@ const updateUpload = async (req, res) => {
 
     if (!updatedUpload) return res.json({ success: false });
 
-    observation = updatedUpload.dataValues.observation?.split(";")[0]
+    observation = updatedUpload.dataValues.observation?.split(";")[0];
 
     if (req?.files?.length) {
       const newGalleryArray = new Array();
@@ -244,11 +272,13 @@ const updateUpload = async (req, res) => {
             file.originalname.split(".")[0]
           }-${date.getDate()}-${
             date.getMonth() + 1
-          }-${date.getFullYear()}-${date.getTime()}.webp`;
+          }-${date.getFullYear()}-${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}.webp`;
           let webpData = await sharp(file.buffer).webp().toBuffer();
           let webpFilePath = path.join(imgPath, filename);
           fs.writeFileSync(webpFilePath, webpData);
-          newGalleryArray.push(`${process.env.SERVER_PATH}/img/${filename}`);
+          newGalleryArray.push(
+            `${process.env.SERVER_PATH}/img/${filename}`
+          );
         }
       });
       await Promise.all(response);
@@ -289,11 +319,11 @@ const updateUpload = async (req, res) => {
       });
     }
 
-    updatedUpload.observation = `${observation};${newGallery}`
+    updatedUpload.observation = `${observation};${newGallery}`;
 
-    const result = await updatedUpload.save()
+    const result = await updatedUpload.save();
 
-    if(!result) return res.json({success: false})
+    if (!result) return res.json({ success: false });
 
     const allSuivis = await suivis.findAll({
       where: {
@@ -302,10 +332,9 @@ const updateUpload = async (req, res) => {
       include: [{ model: users, attribute: ["id", "name"] }],
     });
 
-    if(!allSuivis) return res.json({success: false})
+    if (!allSuivis) return res.json({ success: false });
 
     res.json({ success: true, suivis: allSuivis });
-
   } catch (error) {
     console.log(error);
     res.json({ success: false });
