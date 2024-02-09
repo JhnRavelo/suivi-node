@@ -156,8 +156,63 @@ const deleteProductType = async (req, res) => {
   }
 };
 
+const updateProductTypes = async (req, res) => {
+  try {
+    const { name, id } = await req.body;
+
+    const pdfBuffer = await req.files[0]?.buffer;
+
+    if (!name || !id) return res.json({ success: false });
+
+    const updatedProductType = await productTypes.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!updatedProductType) return res.json({ success: false });
+
+    if (updatedProductType.dataValues?.pdf && pdfBuffer) {
+      const pdfDelete = path.join(
+        pdfFolderPath,
+        updatedProductType.dataValues.pdf
+      );
+      fs.unlinkSync(pdfDelete, (err) => {
+        console.log(err);
+      });
+    }
+
+    if (pdfBuffer) {
+      const originalname = req.files[0].originalname.split(".")[0];
+      const date = new Date();
+      const prefix = `${originalname}-${date.getDate()}-${
+        date.getMonth() + 1
+      }-${date.getFullYear()}.pdf`;
+      const pdfPath = path.join(pdfFolderPath, prefix);
+      fs.writeFileSync(pdfPath, pdfBuffer);
+      updatedProductType.pdf = `${process.env.SERVER_PATH}/pdf/${prefix}`;
+    }
+
+    updatedProductType.name = name;
+
+    const result = await updatedProductType.save();
+
+    if (!result) return res.json({ success: false });
+
+    const allProductTypes = await productTypes.findAll();
+
+    if (!allProductTypes) return res.json({ success: false });
+
+    res.json({ success: true, types: allProductTypes });
+  } catch (error) {
+    res.json({ success: false });
+    console.log(error);
+  }
+};
+
 module.exports = {
   getAllProductTypes,
   addProductType,
   deleteProductType,
+  updateProductTypes
 };
