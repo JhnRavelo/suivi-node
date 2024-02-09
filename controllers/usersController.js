@@ -83,7 +83,7 @@ const userLoginWeb = async (req, res) => {
     const { email, password } = await req.body;
 
     const cookie = req.cookies;
-    console.log("LOGIN")
+    console.log("LOGIN");
     if (!email || !password) return res.json({ success: false });
 
     const userLogged = await users.findOne({
@@ -105,7 +105,10 @@ const userLoginWeb = async (req, res) => {
     const match = await bcrypt.compare(password, userLogged.password);
 
     if (!match)
-      return res.json({ success: false, error: "Connexion Invalide" });
+      return res.json({
+        success: false,
+        error: "Connexion Invalide",
+      });
 
     const id = userLogged.id;
     const role = userLogged.role;
@@ -150,7 +153,6 @@ const userLoginWeb = async (req, res) => {
       name: userLogged.dataValues.name,
       email: userLogged.dataValues.email,
     });
-
   } catch (error) {
     console.log(error);
     res.json({ success: false, error: "Problème de serveur" });
@@ -160,7 +162,7 @@ const userLoginWeb = async (req, res) => {
 const userLogoutWeb = async (req, res) => {
   const cookie = req.cookies;
 
-  if (!cookie?.jwt_ea_suivi) return res.json({success: false});
+  if (!cookie?.jwt_ea_suivi) return res.json({ success: false });
 
   const refreshToken = cookie.jwt_ea_suivi;
 
@@ -176,7 +178,7 @@ const userLogoutWeb = async (req, res) => {
       sameSite: "None",
       secure: true,
     });
-    return res.json({success: false});
+    return res.json({ success: false });
   }
   console.log("vider");
   user.refreshToken = "";
@@ -187,7 +189,54 @@ const userLogoutWeb = async (req, res) => {
     sameSite: "None",
     secure: true,
   });
-  res.json({success: true})
-}
+  res.json({ success: true });
+};
 
-module.exports = { login, logout, userRead, userLoginWeb, userLogoutWeb };
+const getAllUsers = async (req, res) => {
+  try {
+    const allUsers = await users.findAll({
+      where: {
+        role: process.env.PRIME2,
+      },
+    });
+
+    if (!allUsers) return res.json({ success: false });
+
+    const Finalusers = allUsers.map((item) => {
+      let value = item.dataValues;
+      if (value.refreshToken) {
+        return {
+          id: value.id,
+          name: value.name,
+          email: value.email,
+          phone: value.phone,
+          createdAt: value.createdAt,
+          connected: true,
+        };
+      } else {
+        return {
+          id: value.id,
+          name: value.name,
+          email: value.email,
+          phone: value.phone,
+          createdAt: value.createdAt,
+          connected: false,
+        };
+      }
+    });
+
+    res.json({ success: true, users: Finalusers });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false });
+  }
+};
+
+module.exports = {
+  login,
+  logout,
+  userRead,
+  userLoginWeb,
+  userLogoutWeb,
+  getAllUsers,
+};
