@@ -28,6 +28,7 @@ module.exports = (sequelize, DataTypes) => {
     role: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaulValue: process.env.PRIME2
     },
     refreshToken: {
       type: DataTypes.TEXT,
