@@ -8,10 +8,10 @@ const {
   userLogoutWeb,
   getAllUsers,
   addUser,
+  updateUser,
 } = require("../controllers/usersController");
 const verifyJWT = require("../middlewares/verifyJWT");
 const verifyRole = require("../middlewares/verifyRole");
-
 
 router.post("/", login);
 router.post("/logout", verifyJWT, logout);
@@ -22,6 +22,12 @@ router.post(
   verifyJWT,
   verifyRole(process.env.PRIME),
   addUser
+);
+router.post(
+  "/update",
+  verifyJWT,
+  verifyRole(process.env.PRIME),
+  updateUser
 );
 router.get("/user", verifyJWT, userRead);
 router.get(
