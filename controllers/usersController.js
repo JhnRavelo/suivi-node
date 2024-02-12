@@ -45,37 +45,43 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   const { refreshToken } = await req.body;
+  try {
+    if (!refreshToken) return res.json({ success: false });
 
-  if (!refreshToken) return res.json({ success: false });
+    const userLogout = await users.findOne({
+      where: {
+        refreshToken: refreshToken,
+      },
+    });
 
-  const userLogout = await users.findOne({
-    where: {
-      refreshToken: refreshToken,
-    },
-  });
+    if (!userLogout) return res.json({ success: false });
 
-  if (!userLogout) return res.json({ success: false });
+    userLogout.refreshToken = "";
+    await userLogout.save();
 
-  userLogout.refreshToken = "";
-  await userLogout.save();
-
-  res.json({ success: true });
+    res.json({ success: true });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const userRead = async (req, res) => {
   const id = await req.user;
+  try {
+    if (!id) return res.json({ success: false });
 
-  if (!id) return res.json({ success: false });
+    const user = await users.findOne({
+      where: {
+        id: id,
+      },
+    });
 
-  const user = await users.findOne({
-    where: {
-      id: id,
-    },
-  });
+    if (!user) return res.json({ success: false });
 
-  if (!user) return res.json({ success: false });
-
-  res.json({ success: true, name: user.name, email: user.email });
+    res.json({ success: true, name: user.name, email: user.email });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const userLoginWeb = async (req, res) => {
@@ -161,35 +167,38 @@ const userLoginWeb = async (req, res) => {
 
 const userLogoutWeb = async (req, res) => {
   const cookie = req.cookies;
+  try {
+    if (!cookie?.jwt_ea_suivi) return res.json({ success: false });
 
-  if (!cookie?.jwt_ea_suivi) return res.json({ success: false });
+    const refreshToken = cookie.jwt_ea_suivi;
 
-  const refreshToken = cookie.jwt_ea_suivi;
+    const user = await users.findOne({
+      where: {
+        refreshToken: refreshToken,
+      },
+    });
 
-  const user = await users.findOne({
-    where: {
-      refreshToken: refreshToken,
-    },
-  });
+    if (!user) {
+      res.clearCookie("jwt_ea_suivi", {
+        httpOnly: true,
+        sameSite: "None",
+        secure: true,
+      });
+      return res.json({ success: false });
+    }
+    console.log("vider");
+    user.refreshToken = "";
+    await user.save();
 
-  if (!user) {
     res.clearCookie("jwt_ea_suivi", {
       httpOnly: true,
       sameSite: "None",
       secure: true,
     });
-    return res.json({ success: false });
+    res.json({ success: true });
+  } catch (error) {
+    console.log(error);
   }
-  console.log("vider");
-  user.refreshToken = "";
-  await user.save();
-
-  res.clearCookie("jwt_ea_suivi", {
-    httpOnly: true,
-    sameSite: "None",
-    secure: true,
-  });
-  res.json({ success: true });
 };
 
 const getAllUsers = async (req, res) => {
@@ -224,11 +233,37 @@ const getAllUsers = async (req, res) => {
         };
       }
     });
+    console.log("SUCCESS");
 
     res.json({ success: true, users: Finalusers });
   } catch (error) {
     console.log(error);
     res.json({ success: false });
+  }
+};
+
+const addUser = async (req, res) => {
+  console.log(req.body);
+  const { password, phone, email, name } = await req.body;
+  try {
+    if (!password || !phone || !email || !name)
+      return res.json({ success: false });
+
+    const cryptPassword = await bcrypt.hash(password, 10);
+
+    const createdUser = await users.create({
+      name: name,
+      email: email,
+      password: cryptPassword,
+      phone: phone,
+      role: process.env.PRIME2
+    });
+
+    if (!createdUser) return res.json({ success: false });
+
+    await getAllUsers(req, res);
+  } catch (error) {
+    console.log(error);
   }
 };
 
@@ -239,4 +274,5 @@ module.exports = {
   userLoginWeb,
   userLogoutWeb,
   getAllUsers,
+  addUser,
 };
