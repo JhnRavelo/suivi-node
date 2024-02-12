@@ -18,7 +18,7 @@ const getAllProductTypes = async (req, res) => {
 const addProductType = async (req, res) => {
   try {
     const { name } = await req.body;
-    const pdfBuffer = req.files[0]?.buffer;
+    const pdfBuffer = req?.files[0]?.buffer;
     // let imagePaths = [];
     // let imageFiles = [];
     // let newPDF;
@@ -124,7 +124,9 @@ const deleteProductType = async (req, res) => {
 
     if (deletedProductType.dataValues?.pdf) {
       const pdfFile = deletedProductType.dataValues.pdf;
-      fs.unlinkSync(pdfFile, (err) => {
+      const pdfName = pdfFile.split("/")[pdfFile.split("/").length -1]
+      const pdfPath = path.join(pdfFolderPath, pdfName)
+      fs.unlinkSync(pdfPath, (err) => {
         if (err) {
           console.log(err);
         }
@@ -173,11 +175,10 @@ const updateProductTypes = async (req, res) => {
     if (!updatedProductType) return res.json({ success: false });
 
     if (updatedProductType.dataValues?.pdf && pdfBuffer) {
-      const pdfDelete = path.join(
-        pdfFolderPath,
-        updatedProductType.dataValues.pdf
-      );
-      fs.unlinkSync(pdfDelete, (err) => {
+      const pdfFile = updatedProductType.dataValues.pdf;
+      const pdfName = pdfFile.split("/")[pdfFile.split("/").length -1]
+      const pdfPath = path.join(pdfFolderPath, pdfName)
+      fs.unlinkSync(pdfPath, (err) => {
         console.log(err);
       });
     }
