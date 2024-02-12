@@ -243,7 +243,6 @@ const getAllUsers = async (req, res) => {
 };
 
 const addUser = async (req, res) => {
-  console.log(req.body);
   const { password, phone, email, name } = await req.body;
   try {
     if (!password || !phone || !email || !name)
@@ -256,7 +255,7 @@ const addUser = async (req, res) => {
       email: email,
       password: cryptPassword,
       phone: phone,
-      role: process.env.PRIME2
+      role: process.env.PRIME2,
     });
 
     if (!createdUser) return res.json({ success: false });
@@ -264,6 +263,40 @@ const addUser = async (req, res) => {
     await getAllUsers(req, res);
   } catch (error) {
     console.log(error);
+  }
+};
+
+const updateUser = async (req, res) => {
+  const { name, email, password, phone, id } = await req.body;
+
+  try {
+    if (!name || !email || !phone || !id)
+      return res.json({ success: false });
+
+    const updatedUser = await users.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!updatedUser) return res.json({ success: false });
+
+    updatedUser.set({name: name, phone: phone, email: email})
+
+    if(password) {
+      const newPassword = await bcrypt.hash(password, 10)
+      updatedUser.password = newPassword
+    }
+
+    const result = await updatedUser.save()
+
+    if(!result) return res.json({success: false})
+
+    await getAllUsers(req, res)
+
+
+  } catch (error) {
+    console.log(error)
   }
 };
 
@@ -275,4 +308,5 @@ module.exports = {
   userLogoutWeb,
   getAllUsers,
   addUser,
+  updateUser
 };
