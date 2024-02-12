@@ -7,15 +7,23 @@ const {
   userLoginWeb,
   userLogoutWeb,
   getAllUsers,
+  addUser,
 } = require("../controllers/usersController");
 const verifyJWT = require("../middlewares/verifyJWT");
 const verifyRole = require("../middlewares/verifyRole");
 
-router.route("/").post(login);
 
+router.post("/", login);
 router.post("/logout", verifyJWT, logout);
-router.get("/user", verifyJWT, userRead);
 router.post("/login-web", userLoginWeb);
+
+router.post(
+  "/add",
+  verifyJWT,
+  verifyRole(process.env.PRIME),
+  addUser
+);
+router.get("/user", verifyJWT, userRead);
 router.get(
   "/logout-web",
   verifyJWT,
