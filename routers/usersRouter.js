@@ -9,6 +9,7 @@ const {
   getAllUsers,
   addUser,
   updateUser,
+  deleteUser,
 } = require("../controllers/usersController");
 const verifyJWT = require("../middlewares/verifyJWT");
 const verifyRole = require("../middlewares/verifyRole");
@@ -35,6 +36,12 @@ router.get(
   verifyJWT,
   verifyRole(process.env.PRIME),
   userLogoutWeb
+);
+router.delete(
+  "/:id",
+  verifyJWT,
+  verifyRole(process.env.PRIME),
+  deleteUser
 );
 router.get(
   "/getAll",

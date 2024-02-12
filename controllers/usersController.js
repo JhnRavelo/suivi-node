@@ -300,6 +300,29 @@ const updateUser = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+  try {
+    const id = await req.params.id
+
+    if(!id) return res.json({success: false})
+
+    const deletedUser = await users.findOne({where: {
+      id: id
+    }})
+
+    if(!deletedUser) return res.json({success: false})
+
+    const result = await deletedUser.destroy()
+
+    if(!result) return res.json({success: false})
+    
+    await getAllUsers(req, res)
+  } catch (error) {
+    res.json({success: false})
+    console.log(error)
+  }
+}
+
 module.exports = {
   login,
   logout,
@@ -308,5 +331,6 @@ module.exports = {
   userLogoutWeb,
   getAllUsers,
   addUser,
-  updateUser
+  updateUser,
+  deleteUser
 };
