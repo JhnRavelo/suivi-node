@@ -8,11 +8,15 @@ const pdfFolderPath = path.join(__dirname, "..", "public", "pdf");
 const pdfOutput = path.join(__dirname, "..", "public", "img");
 
 const getAllProductTypes = async (req, res) => {
-  const allProductTypes = await productTypes.findAll();
+  try {
+    const allProductTypes = await productTypes.findAll();
 
-  if (!allProductTypes) return res.json({ success: false });
+    if (!allProductTypes) return res.json({ success: false });
 
-  res.json({ success: true, productTypes: allProductTypes });
+    res.json({ success: true, productTypes: allProductTypes });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const addProductType = async (req, res) => {
@@ -124,8 +128,8 @@ const deleteProductType = async (req, res) => {
 
     if (deletedProductType.dataValues?.pdf) {
       const pdfFile = deletedProductType.dataValues.pdf;
-      const pdfName = pdfFile.split("/")[pdfFile.split("/").length -1]
-      const pdfPath = path.join(pdfFolderPath, pdfName)
+      const pdfName = pdfFile.split("/")[pdfFile.split("/").length - 1];
+      const pdfPath = path.join(pdfFolderPath, pdfName);
       fs.unlinkSync(pdfPath, (err) => {
         if (err) {
           console.log(err);
@@ -176,8 +180,8 @@ const updateProductTypes = async (req, res) => {
 
     if (updatedProductType.dataValues?.pdf && pdfBuffer) {
       const pdfFile = updatedProductType.dataValues.pdf;
-      const pdfName = pdfFile.split("/")[pdfFile.split("/").length -1]
-      const pdfPath = path.join(pdfFolderPath, pdfName)
+      const pdfName = pdfFile.split("/")[pdfFile.split("/").length - 1];
+      const pdfPath = path.join(pdfFolderPath, pdfName);
       fs.unlinkSync(pdfPath, (err) => {
         console.log(err);
       });
@@ -215,5 +219,5 @@ module.exports = {
   getAllProductTypes,
   addProductType,
   deleteProductType,
-  updateProductTypes
+  updateProductTypes,
 };
