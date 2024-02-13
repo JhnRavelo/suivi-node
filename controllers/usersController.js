@@ -281,47 +281,47 @@ const updateUser = async (req, res) => {
 
     if (!updatedUser) return res.json({ success: false });
 
-    updatedUser.set({name: name, phone: phone, email: email})
+    updatedUser.set({ name: name, phone: phone, email: email });
 
-    if(password) {
-      const newPassword = await bcrypt.hash(password, 10)
-      updatedUser.password = newPassword
+    if (password) {
+      const newPassword = await bcrypt.hash(password, 10);
+      updatedUser.password = newPassword;
     }
 
-    const result = await updatedUser.save()
+    const result = await updatedUser.save();
 
-    if(!result) return res.json({success: false})
+    if (!result) return res.json({ success: false });
 
-    await getAllUsers(req, res)
-
-
+    await getAllUsers(req, res);
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
 };
 
 const deleteUser = async (req, res) => {
   try {
-    const id = await req.params.id
+    const id = await req.params.id;
 
-    if(!id) return res.json({success: false})
+    if (!id) return res.json({ success: false });
 
-    const deletedUser = await users.findOne({where: {
-      id: id
-    }})
+    const deletedUser = await users.findOne({
+      where: {
+        id: id,
+      },
+    });
 
-    if(!deletedUser) return res.json({success: false})
+    if (!deletedUser) return res.json({ success: false });
 
-    const result = await deletedUser.destroy()
+    const result = await deletedUser.destroy();
 
-    if(!result) return res.json({success: false})
-    
-    await getAllUsers(req, res)
+    if (!result) return res.json({ success: false });
+
+    await getAllUsers(req, res);
   } catch (error) {
-    res.json({success: false})
-    console.log(error)
+    res.json({ success: false });
+    console.log(error);
   }
-}
+};
 
 module.exports = {
   login,
@@ -332,5 +332,5 @@ module.exports = {
   getAllUsers,
   addUser,
   updateUser,
-  deleteUser
+  deleteUser,
 };
