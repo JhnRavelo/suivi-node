@@ -24,8 +24,13 @@ const addProduct = async (req, res) => {
 
       if (!productAdded) return res.json({ success: false });
 
-      const filterProducts = await getProducts(products, productTypes, users, res);
-      console.log(filterProducts)
+      const filterProducts = await getProducts(
+        products,
+        productTypes,
+        users,
+        res
+      );
+      console.log(filterProducts);
 
       res.json({ success: true, products: filterProducts });
     } else {
@@ -52,7 +57,12 @@ const addProduct = async (req, res) => {
 
 const getAllProducts = async (req, res) => {
   try {
-    const filterProducts = await getProducts(products, productTypes, users, res);
+    const filterProducts = await getProducts(
+      products,
+      productTypes,
+      users,
+      res
+    );
 
     res.json({ success: true, products: filterProducts });
   } catch (error) {
@@ -61,4 +71,35 @@ const getAllProducts = async (req, res) => {
   }
 };
 
-module.exports = { addProduct, getAllProducts };
+const deleteProduct = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    if (!id) return res.json({ success: false });
+
+    const deletedProduct = await products.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!deletedProduct) return res.json({ success: false });
+
+    const result = await deletedProduct.destroy();
+
+    if (!result) return res.json({ success: false });
+
+    const filterProducts = await getProducts(
+      products,
+      productTypes,
+      users,
+      res
+    );
+
+    res.json({ success: true, products: filterProducts });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+module.exports = { addProduct, getAllProducts, deleteProduct };
