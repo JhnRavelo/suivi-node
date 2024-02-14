@@ -50,11 +50,28 @@ const getLogs = async (req, res) => {
         16
       )};${value.suivi.problem};${value.suivi.solution}`)
     });
-    res.json({ success: true, logs: filterLogs, allLogs: logs });
+    res.json({ success: true, logs: filterLogs, allLogs: logsAll });
   } catch (error) {
     res.json({ success: false });
     console.log(error);
   }
 };
 
-module.exports = { getLogs };
+const ReadLogs = async (req, res) => {
+  try {
+    const unReadLogs = await logs.update(
+      { unRead: false },
+      {
+        where: {
+          unRead: true,
+        },
+      }
+    );
+    if(!unReadLogs) return res.json({success: false})
+    res.json({success: true})
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+module.exports = { getLogs, ReadLogs };
