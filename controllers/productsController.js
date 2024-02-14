@@ -30,7 +30,6 @@ const addProduct = async (req, res) => {
         users,
         res
       );
-      console.log(filterProducts);
 
       res.json({ success: true, products: filterProducts });
     } else {
@@ -102,4 +101,67 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { addProduct, getAllProducts, deleteProduct };
+const updateProduct = async (req, res) => {
+  try {
+    const {
+      type,
+      location,
+      devis,
+      detail,
+      dimension,
+      client,
+      chantier,
+      tech,
+      id,
+    } = await req.body;
+    const idUser = req.user;
+    let result;
+    if (!type || !location || !devis || !dimension || !id)
+      return res.json({ success: false });
+
+    const updatedProduct = await products.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!updatedProduct) return res.json({ success: false });
+
+    if (tech) {
+      updatedProduct.set({
+        productTypeId: type,
+        location,
+        detail,
+        devis,
+        dimension,
+        userProductId: tech,
+        client,
+        chantier,
+      });
+    } else {
+      updatedProduct.set({
+        productTypeId: type,
+        location,
+        detail,
+        devis,
+        dimension,
+        userProductId: idUser,
+        client,
+        chantier,
+      });
+    }
+
+    result = await updatedProduct.save();
+
+    if (!result) return res.json({ success: false });
+
+    const allProducts = await getProducts(products, productTypes, users, res);
+
+    res.json({ success: true, products: allProducts });
+  } catch (error) {
+    res.json({ success: false });
+    console.log(error);
+  }
+};
+
+module.exports = { addProduct, getAllProducts, deleteProduct, updateProduct };
