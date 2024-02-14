@@ -34,7 +34,6 @@ module.exports = (sequelize, DataTypes) => {
 
   products.associate = (models) => {
     products.belongsTo(models.productTypes, {
-      onDelete: "CASCADE",
       foreignKey: "productTypeId",
     });
     products.hasMany(models.suivis, {
