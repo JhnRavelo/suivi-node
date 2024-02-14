@@ -9,6 +9,7 @@ const {
 const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
+const getSuivis = require("../utils/getSuivis");
 
 const imgPath = path.join(__dirname, "..", "public", "img");
 
@@ -63,8 +64,7 @@ const getByProduct = async (req, res) => {
 };
 
 const addSuivi = async (req, res) => {
-  const { productId, problem, solution, observation } =
-    await req.body;
+  const { productId, problem, solution, observation } = await req.body;
   const userId = await req.user;
 
   if (!productId || !problem || !solution || !userId)
@@ -100,7 +100,7 @@ const deleteSuivi = async (req, res) => {
   let galleryArray;
   const { deleteId, productId } = await req.body;
 
-  if (!deleteId || !productId) return res.json({ success: false });
+  if (!deleteId) return res.json({ success: false });
 
   const deleteSuivi = await suivis.findOne({
     where: {
@@ -110,8 +110,7 @@ const deleteSuivi = async (req, res) => {
 
   if (!deleteSuivi) return res.json({ success: false });
 
-  const galleryString =
-    deleteSuivi.dataValues.observation.split(";")[1];
+  const galleryString = deleteSuivi.dataValues.observation.split(";")[1];
 
   if (galleryString && galleryString != "null") {
     galleryArray = galleryString.split(",");
@@ -127,13 +126,8 @@ const deleteSuivi = async (req, res) => {
         }
       });
     });
-  } else if (
-    !galleryArray &&
-    galleryString &&
-    galleryString != "null"
-  ) {
-    let name =
-      galleryString.split("/")[galleryString.split("/").length - 1];
+  } else if (!galleryArray && galleryString && galleryString != "null") {
+    let name = galleryString.split("/")[galleryString.split("/").length - 1];
     let pathFile = path.join(imgPath, name);
     fs.unlinkSync(pathFile, (err) => {
       if (err) {
@@ -145,15 +139,18 @@ const deleteSuivi = async (req, res) => {
   const result = await deleteSuivi.destroy();
 
   if (!result) return res.json({ success: false });
-
-  const allSuivis = await suivis.findAll({
-    where: {
-      productId: productId,
-    },
-    include: [{ model: users, attribute: ["id", "name"] }],
-  });
-
-  res.json({ success: true, suivis: allSuivis });
+  if (productId) {
+    const allSuivis = await suivis.findAll({
+      where: {
+        productId: productId,
+      },
+      include: [{ model: users, attribute: ["id", "name"] }],
+    });
+    res.json({ success: true, suivis: allSuivis });
+  } else {
+    const filterSuivis = await getSuivis(suivis, users, products, productTypes);
+    res.json({ success: true, suivis: filterSuivis });
+  }
 };
 
 const uploadImageSuivi = async (req, res) => {
@@ -177,17 +174,13 @@ const uploadImageSuivi = async (req, res) => {
     response = req.files.map(async (file) => {
       if (file.mimetype.split("/")[0] == "image") {
         let date = new Date();
-        let filename = `${
-          file.originalname.split(".")[0]
-        }-${date.getDate()}-${
+        let filename = `${file.originalname.split(".")[0]}-${date.getDate()}-${
           date.getMonth() + 1
         }-${date.getFullYear()}-${date.getTime()}.webp`;
         let webpData = await sharp(file.buffer).webp().toBuffer();
         let webpFilePath = path.join(imgPath, filename);
         fs.writeFileSync(webpFilePath, webpData);
-        galleryArray.push(
-          `${process.env.SERVER_PATH}/img/${filename}`
-        );
+        galleryArray.push(`${process.env.SERVER_PATH}/img/${filename}`);
       }
     });
     await Promise.all(response);
@@ -213,8 +206,7 @@ const uploadImageSuivi = async (req, res) => {
 };
 
 const updateSuivi = async (req, res) => {
-  const { id, productId, problem, observation, solution } =
-    await req.body;
+  const { id, productId, problem, observation, solution } = await req.body;
   try {
     if (!id || !productId || !problem || !solution)
       return res.json({ success: false });
@@ -276,9 +268,7 @@ const updateUpload = async (req, res) => {
           let webpData = await sharp(file.buffer).webp().toBuffer();
           let webpFilePath = path.join(imgPath, filename);
           fs.writeFileSync(webpFilePath, webpData);
-          newGalleryArray.push(
-            `${process.env.SERVER_PATH}/img/${filename}`
-          );
+          newGalleryArray.push(`${process.env.SERVER_PATH}/img/${filename}`);
         }
       });
       await Promise.all(response);
@@ -341,6 +331,16 @@ const updateUpload = async (req, res) => {
   }
 };
 
+const getAllSuivis = async (req, res) => {
+  try {
+    const filterSuivis = await getSuivis(suivis, users, products, productTypes);
+
+    res.json({ success: true, suivis: filterSuivis });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   getByProduct,
   addSuivi,
@@ -348,4 +348,5 @@ module.exports = {
   uploadImageSuivi,
   updateSuivi,
   updateUpload,
+  getAllSuivis,
 };
