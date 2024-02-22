@@ -20,6 +20,9 @@ module.exports = (sequelize, DataTypes) => {
     productTypes.hasMany(models.products, {
       foreignKey: "productTypeId",
     });
+    productTypes.hasMany(models.problems, {
+      foreignKey: "productTypeId"
+    })
   };
 
   return productTypes;
