@@ -14,53 +14,62 @@ const getSuivis = require("../utils/getSuivis");
 const imgPath = path.join(__dirname, "..", "public", "img");
 
 const getByProduct = async (req, res) => {
-  const { email, id } = await req.body;
+  try {
+    const { email, id } = await req.body;
 
-  if (!email || !id) return res.json({ success: false });
+    if (!email || !id) return res.json({ success: false });
 
-  const isEmail = await users.findOne({
-    where: {
-      email: {
-        [Op.eq]: email,
+    const isEmail = await users.findOne({
+      where: {
+        email: {
+          [Op.eq]: email,
+        },
       },
-    },
-  });
+    });
 
-  if (!isEmail) return res.json({ success: false });
+    if (!isEmail) return res.json({ success: false });
 
-  const allSuivi = await suivis.findAll({
-    where: {
-      productId: id,
-    },
-    include: [{ model: users, attribute: ["id", "name"] }],
-  });
+    const allSuivi = await suivis.findAll({
+      where: {
+        productId: id,
+      },
+      include: [{ model: users, attribute: ["id", "name"] }],
+    });
 
-  if (!allSuivi) return res.json({ success: false });
+    if (!allSuivi) return res.json({ success: false });
 
-  const product = await products.findOne({
-    where: {
-      id: id,
-    },
-    include: [{ model: productTypes, attribute: ["id", "name"] }],
-  });
+    const product = await products.findOne({
+      where: {
+        id: id,
+      },
+      include: [{ model: productTypes, attribute: ["id", "name"] }],
+    });
 
-  const fiche = [
-    {
-      label: "Type de ménuiserie",
-      value: product.dataValues.productType.name,
-    },
-    {
-      label: "Hauteur et Largeur",
-      value: product.dataValues.dimension,
-    },
-    { label: "Devis", value: product.dataValues.devis },
-    { label: "Emplacement", value: product.dataValues.location },
-    { label: "Détails", value: product.dataValues.detail },
-    { label: "Client", value: product.dataValues.client },
-    { label: "Chantier", value: product.dataValues.chantier },
-  ];
+    const fiche = [
+      {
+        label: "Type de ménuiserie",
+        value: product.dataValues.productType.name,
+      },
+      {
+        label: "Hauteur et Largeur",
+        value: product.dataValues.dimension,
+      },
+      { label: "Devis", value: product.dataValues.devis },
+      { label: "Emplacement", value: product.dataValues.location },
+      { label: "Détails", value: product.dataValues.detail },
+      { label: "Client", value: product.dataValues.client },
+      { label: "Chantier", value: product.dataValues.chantier },
+    ];
 
-  res.json({ success: true, suivis: allSuivi, product: fiche });
+    res.json({
+      success: true,
+      suivis: allSuivi,
+      product: fiche,
+      pdf: product.dataValues.productType.pdf,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const addSuivi = async (req, res) => {
