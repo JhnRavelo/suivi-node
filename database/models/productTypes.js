@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     name: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     pdf: {
       type: DataTypes.TEXT,
@@ -21,7 +21,8 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "productTypeId",
     });
     productTypes.hasMany(models.problems, {
-      foreignKey: "productTypeId"
+      foreignKey: "productTypeId",
+      onDelete: "CASCADE"
     })
   };
 

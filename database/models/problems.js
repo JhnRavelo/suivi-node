@@ -13,7 +13,10 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   problems.associate = (models) => {
-    problems.belongsTo(models.productTypes, { foreignKey: "productTypeId" });
+    problems.belongsTo(models.productTypes, {
+      foreignKey: "productTypeId",
+      onDelete: "CASCADE",
+    });
     problems.hasMany(models.suivis, { foreignKey: "problemId" });
   };
 

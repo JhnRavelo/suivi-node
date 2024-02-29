@@ -24,12 +24,12 @@ module.exports = (sequelize, DataTypes) => {
     },
     client: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     chantier: {
       type: DataTypes.STRING,
-      allowNull: false
-    }
+      allowNull: false,
+    },
   });
 
   products.associate = (models) => {
