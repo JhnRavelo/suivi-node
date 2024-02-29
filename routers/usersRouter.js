@@ -18,36 +18,25 @@ router.post("/", login);
 router.post("/logout", verifyJWT, logout);
 router.post("/login-web", userLoginWeb);
 
-router.post(
-  "/add",
-  verifyJWT,
-  verifyRole(process.env.PRIME),
-  addUser
-);
-router.post(
-  "/update",
-  verifyJWT,
-  verifyRole(process.env.PRIME),
-  updateUser
-);
-router.get("/user", verifyJWT, userRead);
+router
+  .route("/user")
+  .post(verifyJWT, verifyRole(process.env.PRIME), addUser)
+  .put(verifyJWT, verifyRole(process.env.PRIME), updateUser)
+  .get(verifyJWT, userRead);
+
 router.get(
   "/logout-web",
   verifyJWT,
   verifyRole(process.env.PRIME),
   userLogoutWeb
 );
+
 router.delete(
-  "/:id",
+  "/user/:id",
   verifyJWT,
   verifyRole(process.env.PRIME),
   deleteUser
 );
-router.get(
-  "/getAll",
-  verifyJWT,
-  verifyRole(process.env.PRIME),
-  getAllUsers
-);
+router.get("/getAll", verifyJWT, verifyRole(process.env.PRIME), getAllUsers);
 
 module.exports = router;
