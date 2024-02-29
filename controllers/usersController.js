@@ -89,7 +89,6 @@ const userLoginWeb = async (req, res) => {
     const { email, password } = await req.body;
 
     const cookie = req.cookies;
-    console.log("LOGIN");
     if (!email || !password) return res.json({ success: false });
 
     const userLogged = await users.findOne({
@@ -206,12 +205,15 @@ const getAllUsers = async (req, res) => {
     const allUsers = await users.findAll({
       where: {
         role: process.env.PRIME2,
+        email: {
+          [Op.not]: null,
+        },
       },
     });
 
     if (!allUsers) return res.json({ success: false });
 
-    const Finalusers = allUsers.map((item) => {
+    const finalUsers = allUsers.map((item) => {
       let value = item.dataValues;
       if (value.refreshToken) {
         return {
@@ -233,9 +235,8 @@ const getAllUsers = async (req, res) => {
         };
       }
     });
-    console.log("SUCCESS");
 
-    res.json({ success: true, users: Finalusers });
+    res.json({ success: true, users: finalUsers });
   } catch (error) {
     console.log(error);
     res.json({ success: false });
@@ -270,8 +271,7 @@ const updateUser = async (req, res) => {
   const { name, email, password, phone, id } = await req.body;
 
   try {
-    if (!name || !email || !phone || !id)
-      return res.json({ success: false });
+    if (!name || !email || !phone || !id) return res.json({ success: false });
 
     const updatedUser = await users.findOne({
       where: {
@@ -311,8 +311,8 @@ const deleteUser = async (req, res) => {
     });
 
     if (!deletedUser) return res.json({ success: false });
-
-    const result = await deletedUser.destroy();
+    deletedUser.set({email: null, password: null, refreshToken: null});
+    const result = await deletedUser.save()
 
     if (!result) return res.json({ success: false });
 
