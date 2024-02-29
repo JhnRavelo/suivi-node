@@ -80,7 +80,6 @@ const deleteProductType = async (req, res) => {
     const result = await deletedProductType.save();
 
     if (!result) return res.json({ success: false });
-    console.log(result);
     const allProductTypes = await getProductTypes(productTypes, res, Op);
 
     res.json({ success: true, types: allProductTypes });
@@ -94,7 +93,6 @@ const updateProductTypes = async (req, res) => {
     const { name, id } = await req.body;
 
     const pdfBuffer = await req?.files[0]?.buffer;
-    console.log(req.files);
     if (!name || !id) return res.json({ success: false });
 
     const updatedProductType = await productTypes.findOne({
