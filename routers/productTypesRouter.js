@@ -13,20 +13,20 @@ const verifyRole = require("../middlewares/verifyRole");
 const memoryStokage = multer({ storage: multer.memoryStorage() });
 
 router.get("/getAll", verifyJWT, getAllProductTypes);
-router.post(
-  "/add",
-  verifyJWT,
-  verifyRole(process.env.PRIME),
-  memoryStokage.any(),
-  addProductType
-);
-router.post(
-  "/update",
-  verifyJWT,
-  verifyRole(process.env.PRIME),
-  memoryStokage.any(),
-  updateProductTypes
-);
+router
+  .route("/")
+  .post(
+    verifyJWT,
+    verifyRole(process.env.PRIME),
+    memoryStokage.any(),
+    addProductType
+  )
+  .put(
+    verifyJWT,
+    verifyRole(process.env.PRIME),
+    memoryStokage.any(),
+    updateProductTypes
+  );
 router.delete(
   "/:id",
   verifyJWT,
