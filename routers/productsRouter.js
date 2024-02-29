@@ -9,9 +9,11 @@ const {
 const verifyRole = require("../middlewares/verifyRole");
 const router = express.Router();
 
-router.post("/", verifyJWT, addProduct);
+router
+  .route("/")
+  .post(verifyJWT, addProduct)
+  .put(verifyJWT, verifyRole(process.env.PRIME), updateProduct);
 router.get("/getAll", verifyJWT, verifyRole(process.env.PRIME), getAllProducts);
 router.delete("/:id", verifyJWT, verifyRole(process.env.PRIME), deleteProduct);
-router.put("/", verifyJWT, verifyRole(process.env.PRIME), updateProduct);
 
 module.exports = router;
