@@ -5,6 +5,7 @@ const {
   getAllProblems,
   addProblem,
   updateProblem,
+  deleteProblems,
 } = require("../controllers/problemsController");
 const router = express.Router();
 
@@ -13,5 +14,6 @@ router
   .route("/")
   .post(verifyJWT, verifyRole(process.env.PRIME), addProblem)
   .put(verifyJWT, verifyRole(process.env.PRIME), updateProblem);
+router.delete("/:id", verifyJWT, verifyRole(process.env.PRIME), deleteProblems)
 
 module.exports = router;

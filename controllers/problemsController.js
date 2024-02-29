@@ -25,7 +25,7 @@ const updateProblem = async (req, res) => {
     const { name, id } = await req.body;
 
     if (!name || !id) return res.json({ success: false });
-    
+
     const updatedProblem = await problems.findOne({ where: { id: id } });
 
     if (!updatedProblem) return res.json({ success: false });
@@ -53,4 +53,26 @@ const getAllProblems = async (req, res) => {
   }
 };
 
-module.exports = { getAllProblems, addProblem, updateProblem };
+const deleteProblems = async (req, res) => {
+  try {
+    const { id } = await req.params;
+
+    if (!id) return res.json({ success: false });
+
+    const deletedProblem = await problems.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!deletedProblem) return res.json({ success: false });
+
+    const result = await deletedProblem.destroy();
+
+    if (!result) return res.json({ success: false });
+
+    await getAllProblems(req, res);
+  } catch (error) {}
+};
+
+module.exports = { getAllProblems, addProblem, updateProblem, deleteProblems };
