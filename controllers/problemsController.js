@@ -3,7 +3,6 @@ const { problems } = require("../database/models");
 const addProblem = async (req, res) => {
   try {
     const { productTypeId, name } = await req.body;
-    console.log(productTypeId, "PROBLEM")
 
     if (!productTypeId || !name) return res.json({ success: false });
 
@@ -21,6 +20,26 @@ const addProblem = async (req, res) => {
   }
 };
 
+const updateProblem = async (req, res) => {
+  try {
+    const { name, id } = await req.body;
+
+    if (!name || !id) return res.json({ success: false });
+    
+    const updatedProblem = await problems.findOne({ where: { id: id } });
+
+    if (!updatedProblem) return res.json({ success: false });
+
+    updatedProblem.name = name;
+
+    const result = await updatedProblem.save();
+
+    if (!result) return res.json({ success: false });
+
+    await getAllProblems(req, res);
+  } catch (error) {}
+};
+
 const getAllProblems = async (req, res) => {
   try {
     const allProblems = await problems.findAll();
@@ -34,4 +53,4 @@ const getAllProblems = async (req, res) => {
   }
 };
 
-module.exports = { getAllProblems, addProblem };
+module.exports = { getAllProblems, addProblem, updateProblem };
