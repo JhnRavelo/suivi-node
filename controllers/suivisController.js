@@ -5,6 +5,7 @@ const {
   products,
   productTypes,
   logs,
+  problems,
 } = require("../database/models");
 const sharp = require("sharp");
 const fs = require("fs");
@@ -44,28 +45,36 @@ const getByProduct = async (req, res) => {
       },
       include: [{ model: productTypes, attribute: ["id", "name"] }],
     });
-
+    const productValue = product.dataValues;
     const fiche = [
       {
         label: "Type de ménuiserie",
-        value: product.dataValues.productType.name,
+        value: productValue.productType.name,
       },
       {
         label: "Hauteur et Largeur",
-        value: product.dataValues.dimension,
+        value: productValue.dimension,
       },
-      { label: "Devis", value: product.dataValues.devis },
-      { label: "Emplacement", value: product.dataValues.location },
-      { label: "Détails", value: product.dataValues.detail },
-      { label: "Client", value: product.dataValues.client },
-      { label: "Chantier", value: product.dataValues.chantier },
+      { label: "Devis", value: productValue.devis },
+      { label: "Emplacement", value: productValue.location },
+      { label: "Détails", value: productValue.detail },
+      { label: "Client", value: productValue.client },
+      { label: "Chantier", value: productValue.chantier },
     ];
+    const allProblems = await problems.findAll({
+      where: { productTypeId: productValue.productType.id },
+    });
+
+    const filterProblems = allProblems.map((item) => {
+      return { value: item.dataValues.id, label: item.dataValues.name };
+    });
 
     res.json({
       success: true,
       suivis: allSuivi,
       product: fiche,
-      pdf: product.dataValues.productType.pdf,
+      pdf: productValue.productType.pdf,
+      problems: filterProblems,
     });
   } catch (error) {
     console.log(error);
@@ -73,7 +82,7 @@ const getByProduct = async (req, res) => {
 };
 
 const addSuivi = async (req, res) => {
-  const { productId, problem, solution, observation } = await req.body;
+  const { productId, problem, solution, observation, problemId } = await req.body;
   const userId = await req.user;
 
   if (!productId || !problem || !solution || !userId)
@@ -88,6 +97,10 @@ const addSuivi = async (req, res) => {
   });
 
   if (!newSuivi) return res.json({ success: false });
+  
+  if (problemId) newSuivi.problemId = problemId
+
+  await newSuivi.save()
 
   await logs.create({ suiviId: newSuivi.dataValues.id });
 
