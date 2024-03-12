@@ -7,7 +7,7 @@ const db = require("./database/models");
 
 const app = express();
 
-db.sequelize.sync({ alter: true }).then(() => {
+db.sequelize.sync().then(() => {
   app.listen(process.env.SERVER_PORT, () => {
     console.log(`http://localhost:${process.env.SERVER_PORT}`);
   });
