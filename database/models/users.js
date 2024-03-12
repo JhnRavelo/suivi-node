@@ -44,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       process.env.ACCESS_TOKEN,
       {
-        expiresIn: "10m",
+        expiresIn: "3600s",
       }
     );
 
