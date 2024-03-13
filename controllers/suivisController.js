@@ -10,6 +10,7 @@ const {
 const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
+const sequelize = require("sequelize");
 const getSuivis = require("../utils/getSuivis");
 const deleteImage = require("../utils/deleteImage");
 const createImage = require("../utils/createImage");
@@ -287,6 +288,40 @@ const getAllSuivis = async (req, res) => {
   }
 };
 
+const getStatPerYear = async (req, res) => {
+  try {
+    const problemsByProductTypes = await suivis.findAll({
+      where: {
+        problemId: { [Op.not]: null },
+      },
+      attributes: [
+        [sequelize.literal("YEAR(suivis.createdAt)"), "year"],
+        [
+          sequelize.fn("COUNT", sequelize.col("suivis.problemId")),
+          "problemCount",
+        ],
+      ],
+      group: "problemId",
+      include: [{ model: products }, { model: problems, as: "problems" }],
+    });
+
+    if (!problemsByProductTypes) return res.json({ success: false });
+    const statProblems = problemsByProductTypes.map((item) => {
+      const value = item.dataValues;
+      return {
+        year: value.year,
+        productTypeId: value.product.productTypeId,
+        count: value.problemCount,
+        name: value.problems.name,
+      };
+    });
+    res.json({ success: true, statProblems: statProblems });
+  } catch (error) {
+    res.json({ success: false });
+    console.log("ERROR getStatPerYear", error);
+  }
+};
+
 module.exports = {
   getByProduct,
   addSuivi,
@@ -295,4 +330,5 @@ module.exports = {
   updateSuivi,
   updateUpload,
   getAllSuivis,
+  getStatPerYear,
 };
