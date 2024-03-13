@@ -4,7 +4,9 @@ const {
   suivis,
   productTypes,
   users,
+  problems,
 } = require("../database/models");
+const getProblem = require("../utils/getProblem");
 
 const getLogs = async (req, res) => {
   try {
@@ -21,6 +23,10 @@ const getLogs = async (req, res) => {
               model: users,
               attributes: ["name"],
             },
+            {
+              model: problems,
+              as: "problems",
+            },
           ],
         },
       ],
@@ -28,12 +34,13 @@ const getLogs = async (req, res) => {
 
     if (!allLogs) return res.json({ success: false });
 
-    let filterLogs = []
-    let logsAll = []
+    let filterLogs = [];
+    let logsAll = [];
 
     allLogs.map((log) => {
-      let value = log.dataValues;
-      if(value.unRead){
+      const value = log.dataValues;
+      const problem = getProblem(value.suivi);
+      if (value.unRead) {
         filterLogs.push(
           `${value.suivi.user.name} a effectué un suivi du produit ${
             value.suivi.product.productType.name
@@ -43,21 +50,23 @@ const getLogs = async (req, res) => {
           )}`
         );
       }
-      logsAll.push(`${value.suivi.user.name} a effectué un suivi du produit ${
-        value.suivi.product.productType.name
-      } du devis ${value.suivi.product.devis};${value.createdAt.slice(
-        0,
-        16
-      )};${value.suivi.problem};${value.suivi.solution}`)
+      logsAll.push(
+        `${value.suivi.user.name} a effectué un suivi du produit ${
+          value.suivi.product.productType.name
+        } du devis ${value.suivi.product.devis};${value.createdAt.slice(
+          0,
+          16
+        )};${problem};${value.suivi.solution}`
+      );
     });
     res.json({ success: true, logs: filterLogs, allLogs: logsAll });
   } catch (error) {
     res.json({ success: false });
-    console.log(error);
+    console.log("ERROR getLogs", error);
   }
 };
 
-const ReadLogs = async (req, res) => {
+const readLogs = async (req, res) => {
   try {
     const unReadLogs = await logs.update(
       { unRead: false },
@@ -67,11 +76,11 @@ const ReadLogs = async (req, res) => {
         },
       }
     );
-    if(!unReadLogs) return res.json({success: false})
-    res.json({success: true})
+    if (!unReadLogs) return res.json({ success: false });
+    res.json({ success: true });
   } catch (error) {
-    console.log(error)
+    console.log("ERROR readLogs", error);
   }
-}
+};
 
-module.exports = { getLogs, ReadLogs };
+module.exports = { getLogs, readLogs };
