@@ -316,7 +316,6 @@ const getStatPerYear = async (req, res) => {
         name: value.problems.name,
       };
     });
-
     const productByProblems = await suivis.findAll({
       attributes: [
         [sequelize.literal("YEAR(suivis.createdAt)"), "year"],
@@ -329,6 +328,7 @@ const getStatPerYear = async (req, res) => {
       group: ["suivis.productId", "year"],
       order: [[sequelize.literal("productCount"), "DESC"]],
     });
+
     if (!productByProblems) return res.json({ success: false });
     let nbrOfYear = [{ year: productByProblems[0].dataValues.year, nbr: 0 }];
     const statTop = await Promise.all(
@@ -389,11 +389,22 @@ const getStatPerYear = async (req, res) => {
     ).then((value) => {
       return value.filter((item) => item !== undefined);
     });
-    console.log(cc.set("fg_blue", "NBR YEAR"), nbrOfYear);
+    const suiviByMonthYear = await suivis.findAll({
+      attributes: [
+        [sequelize.literal("YEAR(suivis.createdAt)"), "year"],
+        [sequelize.literal("MONTH(suivis.createdAt)"), "month"],
+        [sequelize.fn("COUNT", sequelize.col("suivis.id")), "suiviCount"],
+      ],
+      group: ["year", "month"],
+      order: ["month"],
+    });
+
+    if (!suiviByMonthYear) return res.json({ success: false });
     res.json({
       success: true,
       statProblems: statProblems,
       statTop: statTop,
+      statSuivis: suiviByMonthYear,
     });
   } catch (error) {
     res.json({ success: false });
