@@ -10,6 +10,7 @@ const {
 const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
+const cc = require("node-console-colors");
 const sequelize = require("sequelize");
 const getSuivis = require("../utils/getSuivis");
 const deleteImage = require("../utils/deleteImage");
@@ -301,7 +302,7 @@ const getStatPerYear = async (req, res) => {
           "problemCount",
         ],
       ],
-      group: "problemId",
+      group: ["problemId", "year"],
       include: [{ model: products }, { model: problems, as: "problems" }],
     });
 
@@ -315,7 +316,85 @@ const getStatPerYear = async (req, res) => {
         name: value.problems.name,
       };
     });
-    res.json({ success: true, statProblems: statProblems });
+
+    const productByProblems = await suivis.findAll({
+      attributes: [
+        [sequelize.literal("YEAR(suivis.createdAt)"), "year"],
+        [
+          sequelize.fn("COUNT", sequelize.col("suivis.productId")),
+          "productCount",
+        ],
+      ],
+      include: [{ model: products, include: [{ model: productTypes }] }],
+      group: ["suivis.productId", "year"],
+      order: [[sequelize.literal("productCount"), "DESC"]],
+    });
+    if (!productByProblems) return res.json({ success: false });
+    let nbrOfYear = [{ year: productByProblems[0].dataValues.year, nbr: 0 }];
+    const statTop = await Promise.all(
+      productByProblems.map(async (item) => {
+        const value = item.dataValues;
+        const productCount = value.productCount;
+        const year = value.year;
+        const type = value.product.productType.name;
+        const devis = value.product.devis;
+        const client = value.product.client;
+        const chantier = value.product.chantier;
+        const productId = value.product.id;
+        const findNbr = nbrOfYear.find((item) => item.year == year);
+        if ((findNbr && findNbr.nbr < 5) || !findNbr) {
+          if (findNbr) {
+            const indexOfYear = nbrOfYear.findIndex(
+              (item) => item.year == findNbr.year
+            );
+            if (indexOfYear !== -1) {
+              nbrOfYear[indexOfYear].nbr += 1;
+            }
+          } else {
+            nbrOfYear.push({ year: year, nbr: 1 });
+          }
+          const listProblems = await suivis.findAll({
+            where: {
+              createdAt: {
+                [Op.substring]: `${year}`,
+              },
+              productId: productId,
+            },
+            attributes: [
+              "problemId",
+              "problem",
+              [
+                sequelize.fn("COUNT", sequelize.col("suivis.problemId")),
+                "problemCount",
+              ],
+            ],
+            group: "problemId",
+            include: [{ model: problems, as: "problems" }],
+            order: [[sequelize.literal("problemCount"), "DESC"]],
+            limit: 3,
+          });
+
+          return {
+            id: productId,
+            productCount,
+            year,
+            type,
+            devis,
+            client,
+            chantier,
+            problems: listProblems,
+          };
+        } else return undefined;
+      })
+    ).then((value) => {
+      return value.filter((item) => item !== undefined);
+    });
+    console.log(cc.set("fg_blue", "NBR YEAR"), nbrOfYear);
+    res.json({
+      success: true,
+      statProblems: statProblems,
+      statTop: statTop,
+    });
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR getStatPerYear", error);
