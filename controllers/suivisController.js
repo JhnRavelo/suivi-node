@@ -400,11 +400,49 @@ const getStatPerYear = async (req, res) => {
     });
 
     if (!suiviByMonthYear) return res.json({ success: false });
+    const suiviByProductTypes = await products.findAll({
+      include: [
+        {
+          model: suivis,
+          attributes: [
+            [sequelize.literal("YEAR(suivis.createdAt)"), "year"],
+            [sequelize.fn("COUNT", sequelize.col("productTypeId")), "count"],
+          ],
+        },
+        {
+          model: productTypes,
+        },
+      ],
+      group: [
+        "productTypeId",
+        [sequelize.literal("YEAR(suivis.createdAt)"), "year"],
+      ],
+    });
+
+    if (!suiviByProductTypes) return res.json({ success: false });
+    let statProductTypes = [];
+    await Promise.all(
+      suiviByProductTypes.map(async (item) => {
+        const value = item.dataValues;
+        if (value.suivis) {
+          await Promise.all(
+            value.suivis.map((item) => {
+              statProductTypes.push({
+                name: value.productType.name,
+                year: item.dataValues.year,
+                count: item.dataValues.count,
+              });
+            })
+          );
+        }
+      })
+    );
     res.json({
       success: true,
       statProblems: statProblems,
       statTop: statTop,
       statSuivis: suiviByMonthYear,
+      statProductTypes,
     });
   } catch (error) {
     res.json({ success: false });
