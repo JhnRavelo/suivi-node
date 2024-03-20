@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
     role: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaulValue: process.env.PRIME2
+      defaulValue: process.env.PRIME2,
     },
     refreshToken: {
       type: DataTypes.TEXT,
@@ -49,6 +49,28 @@ module.exports = (sequelize, DataTypes) => {
     );
 
     return accesToken;
+  };
+  users.prototype.generateData = (data) => {
+    // const data = dataUser.map((item) => {
+    //   return `${
+    //     item.id +
+    //     "," +
+    //     item.name +
+    //     "," +
+    //     item.email +
+    //     "," +
+    //     item.password +
+    //     "," +
+    //     item.phone +
+    //     "," +
+    //     item.role
+    //   }`;
+    // });
+    const dataToken = jwt.sign(
+      { data: JSON.stringify(data) },
+      process.env.DATA_TOKEN
+    );
+    return dataToken;
   };
   users.prototype.generateRefreshToken = (id) => {
     const refreshToken = jwt.sign(
