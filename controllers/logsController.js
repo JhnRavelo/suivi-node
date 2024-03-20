@@ -7,7 +7,6 @@ const {
   problems,
 } = require("../database/models");
 const sequelize = require("sequelize");
-const cc = require("node-console-colors");
 const getProblem = require("../utils/getProblem");
 
 const getLogs = async (req, res) => {
@@ -65,7 +64,6 @@ const getLogs = async (req, res) => {
         solution: value.suivi.solution,
       });
     });
-    console.log(cc.set("fg_blue", "LOG"), logsAll);
     res.json({ success: true, logs: filterLogs, allLogs: logsAll });
   } catch (error) {
     res.json({ success: false });
