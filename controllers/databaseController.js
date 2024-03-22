@@ -4,6 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const generateRandomText = require("../utils/generateRandomText");
 const createDirectory = require("../utils/createDirectory");
+const readDirectory = require("../utils/readDirectory");
 
 const exportPath = path.join(__dirname, "..", "database", "export");
 const importPath = path.join(__dirname, "..", "database", "import");
@@ -85,4 +86,51 @@ const importDatabase = async (req, res) => {
   }
 };
 
-module.exports = { exportDatabase, importDatabase };
+const readExport = async (req, res) => {
+  try {
+    const exportDirs = readDirectory(exportPath);
+    const files = exportDirs
+      .map((item, index) => {
+        const pathExports = item.split(`\\`);
+        const fileWithExt = pathExports[pathExports.length - 1];
+        if (fileWithExt.split(".")[1] == "tmp" && pathExports[pathExports.length - 2]!="export") {
+          const fileName = fileWithExt.split(".")[0];
+          const day = pathExports[pathExports.length - 2];
+          const month = pathExports[pathExports.length - 3];
+          const year = pathExports[pathExports.length - 4];
+          const times = fileName.split("-");
+          const seconds = times[times.length - 1];
+          const minutes = times[times.length - 2];
+          const hours = times[times.length - 3];
+          return {
+            id: index,
+            name: `Sauvegarde ${index}`,
+            path: item,
+            createdAt: `${
+              day +
+              "/" +
+              month +
+              "/" +
+              year +
+              " " +
+              hours +
+              ":" +
+              minutes +
+              ":" +
+              seconds
+            }`,
+          };
+        } else {
+          return undefined;
+        }
+      })
+      .filter((item) => item !== undefined);
+
+    res.json({ success: true, files: files });
+  } catch (error) {
+    res.json({ success: false });
+    console.log("ERROR READ EXPORT", error);
+  }
+};
+
+module.exports = { exportDatabase, importDatabase, readExport };
