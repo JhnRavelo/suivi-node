@@ -51,21 +51,6 @@ module.exports = (sequelize, DataTypes) => {
     return accesToken;
   };
   users.prototype.generateData = (data) => {
-    // const data = dataUser.map((item) => {
-    //   return `${
-    //     item.id +
-    //     "," +
-    //     item.name +
-    //     "," +
-    //     item.email +
-    //     "," +
-    //     item.password +
-    //     "," +
-    //     item.phone +
-    //     "," +
-    //     item.role
-    //   }`;
-    // });
     const dataToken = jwt.sign(
       { data: JSON.stringify(data) },
       process.env.DATA_TOKEN
