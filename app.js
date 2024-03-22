@@ -2,39 +2,58 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
-const verifyJWT = require("./middlewares/verifyJWT");
-const verifyRole = require("./middlewares/verifyRole");
-const sqEI = require("sequelize-import-export");
+const jwt = require("jsonwebtoken");
 const path = require("path");
-const fs = require("fs");
 require("dotenv").config();
 const db = require("./database/models");
+const fs = require("fs");
+const generateRandomText = require("./utils/generateRandomText");
 
 const app = express();
 
-const exportPath = path.join(__dirname, "database", "export");
+const pathExport = path.join(__dirname, "database", "export");
 
 db.sequelize.sync().then(() => {
-  app.listen(process.env.SERVER_PORT, () => {
-    // const dirExport = fs.readdirSync(exportPath);
-    // const sequelizeFile = dirExport.find((item) => item.includes(".sequelize"));
-    // console.log("SEQUELIZE", sequelizeFile);
-    // if (
-    //   fs.existsSync("./database/export/export.sequelize") &&
-    //   !fs.existsSync("./database/export/export.json")
-    // ) {
-    //   fs.copyFileSync(
-    //     "./database/export/export.sequelize",
-    //     "./database/export/export.json"
-    //   );
-    // }
-    // if (fs.existsSync("./database/export/export.json")) {
-    //   const fileJSON = require("./database/export/export.json");
-    //   const userJSON = fileJSON
-    //     .find((item) => item.modelName == "users")
-    //     .data.find((item) => item.email == process.env.USER_NAME);
-    //   console.log("FILE", userJSON.name);
-    // }
+  app.listen(process.env.SERVER_PORT, async () => {
+    try {
+      const user = await db.users.findOne({
+        where: { role: process.env.PRIME },
+      });
+      if (user) {
+        fs.readdir(pathExport, (err, files) => {
+          if (err) return console.log("ERROR READ DIRECTORY", err);
+          const tempFile = files.find((item) => item.includes(".tmp"));
+          fs.unlinkSync(path.join(pathExport, tempFile));
+        });
+        const stringDataUser = db.users.prototype.generateData(user);
+        const fileName = generateRandomText(10);
+        fs.writeFileSync(
+          path.join(pathExport, `${fileName}.tmp`),
+          stringDataUser,
+          {
+            flag: "w",
+            encoding: "utf8",
+          }
+        );
+      } else {
+        fs.readdir(pathExport, (err, files) => {
+          if (err) return console.log("ERROR READ DIRECTORY", err);
+          const tempFile = files.find((item) => item.includes(".tmp"));
+          const readTmp = fs.readFileSync(path.join(pathExport, tempFile), {
+            encoding: "utf8",
+          });
+          jwt.verify(readTmp, process.env.DATA_TOKEN, async (err, decoded) => {
+            if (err) {
+              return console.log(err);
+            }
+            const row = JSON.parse(decoded.data);
+            await db.users.create(row);
+          });
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
     console.log(`http://localhost:${process.env.SERVER_PORT}`);
   });
 });
