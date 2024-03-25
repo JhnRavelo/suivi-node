@@ -20,39 +20,31 @@ db.sequelize.sync().then(() => {
         where: { role: process.env.PRIME },
       });
       if (user) {
+        const stringDataUser = db.users.prototype.generateData(user);
+        const { location } = createFile(
+          generateRandomText(10),
+          stringDataUser,
+          fs,
+          path,
+          "tmp",
+          pathExport,
+          "tmpApp"
+        );
+        if (!location) return console.log("ERROR CREATE FILE");
         fs.readdir(pathExport, (err, files) => {
           if (err) return console.log("ERROR READ DIRECTORY", err);
           const tempFile = files.find((item) => item.includes(".tmp"));
           fs.unlinkSync(path.join(pathExport, tempFile));
         });
-        const stringDataUser = db.users.prototype.generateData(user);
-        const fileName = generateRandomText(10);
-        fs.writeFileSync(
-          path.join(pathExport, `${fileName}.tmp`),
-          stringDataUser,
-          {
-            flag: "w",
-            encoding: "utf8",
-          }
-        );
       } else {
-        fs.readdir(pathExport, (err, files) => {
+        fs.readdir(pathExport, async (err, files) => {
           if (err) return console.log("ERROR READ DIRECTORY", err);
           const tempFile = files.find((item) => item.includes(".tmp"));
-          const readTmp = fs.readFileSync(path.join(pathExport, tempFile), {
-            encoding: "utf8",
-          });
-          jwt.verify(readTmp, process.env.DATA_TOKEN, async (err, decoded) => {
-            if (err) {
-              return console.log(err);
-            }
-            const row = JSON.parse(decoded.data);
-            await db.users.create(row);
-          });
+          await createUserViaTmp(fs, path.join(pathExport, tempFile), jwt, db);
         });
       }
     } catch (error) {
-      console.log(error);
+      console.log("ERROR SAVE USER", error);
     }
     console.log(`http://localhost:${process.env.SERVER_PORT}`);
   });
@@ -101,4 +93,7 @@ app.use("/log", logsRouter);
 const problemsRouter = require("./routers/problemsRouter");
 app.use("/problem", problemsRouter);
 const databaseRouter = require("./routers/databaseRouter");
+const { createFile } = require("./utils/createFile");
+const { where } = require("sequelize");
+const createUserViaTmp = require("./utils/createUserViaTmp");
 app.use("/data", databaseRouter);
