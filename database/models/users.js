@@ -23,11 +23,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     phone: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     role: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       defaulValue: process.env.PRIME2,
     },
     refreshToken: {

@@ -237,7 +237,7 @@ const addUser = async (req, res) => {
     if (!createdUser) return res.json({ success: false });
     await getAllUsers(req, res);
   } catch (error) {
-    res.json({success: false})
+    res.json({ success: false });
     console.log("ERROR ADDUSER", error);
   }
 };
@@ -264,7 +264,7 @@ const updateUser = async (req, res) => {
     if (!result) return res.json({ success: false });
     await getAllUsers(req, res);
   } catch (error) {
-    res.json({success: false})
+    res.json({ success: false });
     console.log("ERROR UPDATEUSER", error);
   }
 };
@@ -281,7 +281,15 @@ const deleteUser = async (req, res) => {
     });
 
     if (!deletedUser) return res.json({ success: false });
-    deletedUser.set({ email: null, password: null, refreshToken: null });
+    deletedUser.set({
+      email: null,
+      password: null,
+      refreshToken: null,
+      phone: null,
+      createdAt: null,
+      updatedAt: null,
+      role: null
+    });
     const result = await deletedUser.save();
 
     if (!result) return res.json({ success: false });
