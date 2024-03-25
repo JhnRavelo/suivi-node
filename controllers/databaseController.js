@@ -129,8 +129,7 @@ const restoreExport = async (req, res) => {
             );
             if (error) {
               result.success = false;
-              result.message =
-                "Erreur durant l'importation de la base";
+              result.message = "Erreur durant l'importation de la base";
               return;
             }
           }
@@ -144,4 +143,29 @@ const restoreExport = async (req, res) => {
   }
 };
 
-module.exports = { exportDatabase, importDatabase, readExport, restoreExport };
+const deleteExport = async (req, res) => {
+  try {
+    const { file } = await req.body;
+    fs.readdir(file.dirPath, async (err, files) => {
+      if(err) {
+        return res.json({success :false, message: "Erreur de lecture du dossier de Restauration"})
+      }
+      const filterFiles = files.filter(item=>item.includes(file.time))
+      console.log(filterFiles)
+      await Promise.all(filterFiles.map(item=>{
+        fs.unlinkSync(path.join(file.dirPath, item))
+      }))
+      await readExport(req,res)
+    })
+  } catch (error) {
+    console.log("ERROR DELETE EXPORT", error)
+  }
+};
+
+module.exports = {
+  exportDatabase,
+  importDatabase,
+  readExport,
+  restoreExport,
+  deleteExport,
+};

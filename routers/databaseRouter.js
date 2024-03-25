@@ -6,6 +6,7 @@ const {
   importDatabase,
   readExport,
   restoreExport,
+  deleteExport,
 } = require("../controllers/databaseController");
 const router = express.Router();
 const multer = require("multer");
@@ -31,6 +32,12 @@ router.post(
   verifyJWT,
   verifyRole(process.env.PRIME),
   restoreExport
+);
+router.post(
+  "/delete/export",
+  verifyJWT,
+  verifyRole(process.env.PRIME),
+  deleteExport
 );
 
 module.exports = router;
