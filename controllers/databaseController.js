@@ -2,16 +2,20 @@ const db = require("../database/models");
 const sqEI = require("../database/sequelize-import-export");
 const path = require("path");
 const fs = require("fs");
+const cc = require("node-console-colors");
+const jwt = require("jsonwebtoken");
 const generateRandomText = require("../utils/generateRandomText");
-const createDirectory = require("../utils/createDirectory");
 const readDirectory = require("../utils/readDirectory");
+const getExport = require("../utils/getExport");
+const { createFile, getDate } = require("../utils/createFile");
+const importFileToDatabase = require("../utils/importDatabase");
+const createUserViaTmp = require("../utils/createUserViaTmp");
 
 const exportPath = path.join(__dirname, "..", "database", "export");
 const importPath = path.join(__dirname, "..", "database", "import");
 
 const exportDatabase = async (req, res) => {
   try {
-    const date = new Date();
     const dbex = new sqEI(db);
     const users = await db.users.findAll({
       where: {
@@ -19,45 +23,40 @@ const exportDatabase = async (req, res) => {
       },
     });
     const dataStringInFile = db.users.prototype.generateData(users);
-    const fileName =
-      generateRandomText(10) +
-      `-${
-        date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds()
-      }.tmp`;
-    const exportDir = createDirectory(exportPath, 0);
-    fs.writeFileSync(path.join(exportDir, fileName), dataStringInFile, {
-      encoding: "utf8",
-      flag: "w",
-    });
-    const exportFileName = `export-${
-      date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds()
-    }.sequelize`;
-    const pathExportFile = path.join(exportDir, exportFileName);
+    const { fileDir } = createFile(
+      generateRandomText(10),
+      dataStringInFile,
+      fs,
+      path,
+      "tmp",
+      exportPath
+    );
+    const exportFileName = `export-${getDate()}.sequelize`;
+    const pathExportFile = path.join(fileDir, exportFileName);
     dbex
       .export(pathExportFile, { excludes: ["users"] })
       .then((path) => {
         res.download(path);
       })
       .catch((err) => {
+        res.json({
+          success: false,
+          message: "Erreur dans l'exportation dans le sequelize",
+        });
         console.log("ERROR EXPORT SEQUELIZE", err);
       });
   } catch (error) {
+    res.json({
+      success: false,
+      message: "Erreur dans l'exportation du base de données",
+    });
     console.log("ERROR EXPORT DATABASE", error);
   }
 };
 
 const importDatabase = async (req, res) => {
   try {
-    const date = new Date();
-    const dbex = new sqEI([
-      db.productTypes,
-      db.products,
-      db.problems,
-      db.suivis,
-      db.logs,
-    ]);
-    console.log("FILE", req.files[0]);
-    if (!req.files && !req.files[0])
+    if (!req.files)
       return res.json({ success: false, message: "Aucun fichier envoyer" });
     if (!req.files[0].originalname.includes(".sequelize"))
       return res.json({
@@ -65,22 +64,24 @@ const importDatabase = async (req, res) => {
         message: "Le fichier doit être de type sequelize",
       });
     const fileBuffer = req.files[0].buffer;
-    const importDir = createDirectory(importPath, 0);
-    const importFileName = `import-${
-      date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds()
-    }.sequelize`;
-    const importFilePath = path.join(importDir, importFileName);
-    fs.writeFileSync(importFilePath, fileBuffer, {
-      encoding: "utf8",
-      flag: "w",
+    const { location } = createFile(
+      "import",
+      fileBuffer,
+      fs,
+      path,
+      "sequelize",
+      importPath
+    );
+    const isImport = importFileToDatabase(sqEI, location, db);
+    if (!isImport)
+      return res.json({
+        success: false,
+        message: "Importation de la base de données échouer",
+      });
+    res.json({
+      success: true,
+      message: "Succès de l'importation de la base de données",
     });
-    dbex
-      .import(importFilePath, { overwrite: true, excludes: ["users"] })
-      .then((file) => {
-        console.log(file);
-      })
-      .catch((err) => console.log("ERROR IMPORT SEQUELIZE", err));
-    res.json({ success: true });
   } catch (error) {
     console.log("ERROR IMPORT DATABASE", error);
   }
@@ -89,43 +90,7 @@ const importDatabase = async (req, res) => {
 const readExport = async (req, res) => {
   try {
     const exportDirs = readDirectory(exportPath);
-    const files = exportDirs
-      .map((item, index) => {
-        const pathExports = item.split(`\\`);
-        const fileWithExt = pathExports[pathExports.length - 1];
-        if (fileWithExt.split(".")[1] == "tmp" && pathExports[pathExports.length - 2]!="export") {
-          const fileName = fileWithExt.split(".")[0];
-          const day = pathExports[pathExports.length - 2];
-          const month = pathExports[pathExports.length - 3];
-          const year = pathExports[pathExports.length - 4];
-          const times = fileName.split("-");
-          const seconds = times[times.length - 1];
-          const minutes = times[times.length - 2];
-          const hours = times[times.length - 3];
-          return {
-            id: index,
-            name: `Sauvegarde ${index}`,
-            path: item,
-            createdAt: `${
-              day +
-              "/" +
-              month +
-              "/" +
-              year +
-              " " +
-              hours +
-              ":" +
-              minutes +
-              ":" +
-              seconds
-            }`,
-          };
-        } else {
-          return undefined;
-        }
-      })
-      .filter((item) => item !== undefined);
-
+    const files = await getExport(exportDirs, path, exportPath);
     res.json({ success: true, files: files });
   } catch (error) {
     res.json({ success: false });
@@ -133,4 +98,50 @@ const readExport = async (req, res) => {
   }
 };
 
-module.exports = { exportDatabase, importDatabase, readExport };
+const restoreExport = async (req, res) => {
+  try {
+    const { file } = await req.body;
+    let result = { success: true, message: "Base de données restaurer" };
+    console.log("FILE", file);
+    fs.readdir(file.dirPath, (err, files) => {
+      if (err) {
+        console.log("ERROR READ DIRECTORY RESTORE EXPORT", err);
+        result.success = false;
+        result.message = "Erreur de lecture du dossier de Restauration";
+      }
+      const filterFiles = files.filter((filterFile) =>
+        filterFile.includes(file.time)
+      );
+      Promise.all(
+        filterFiles.map(async (filterFile) => {
+          if (filterFile.split(".")[1].includes("tmp")) {
+            await createUserViaTmp(
+              fs,
+              path.join(file.dirPath, filterFile),
+              jwt,
+              db
+            );
+          } else {
+            const error = await importFileToDatabase(
+              sqEI,
+              path.join(file.dirPath, filterFile),
+              db
+            );
+            if (error) {
+              result.success = false;
+              result.message =
+                "Erreur durant l'importation de la base";
+              return;
+            }
+          }
+        })
+      );
+      res.json(result);
+    });
+  } catch (error) {
+    res.json({ success: false, message: "Erreur de la Restauration" });
+    console.log("ERROR RESTORE EXPORT", error);
+  }
+};
+
+module.exports = { exportDatabase, importDatabase, readExport, restoreExport };
