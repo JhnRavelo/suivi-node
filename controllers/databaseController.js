@@ -7,9 +7,12 @@ const jwt = require("jsonwebtoken");
 const generateRandomText = require("../utils/generateRandomText");
 const readDirectory = require("../utils/readDirectory");
 const getExport = require("../utils/getExport");
-const { createFile, getDate } = require("../utils/createFile");
+const { createFile } = require("../utils/createFile");
 const importFileToDatabase = require("../utils/importDatabase");
 const createUserViaTmp = require("../utils/createUserViaTmp");
+const compressZip = require("../utils/compressZip");
+const generateDataJWT = require("../utils/generateDataJWT");
+const decompressZip = require("../utils/decompressZip");
 
 const exportPath = path.join(__dirname, "..", "database", "export");
 const importPath = path.join(__dirname, "..", "database", "import");
@@ -22,8 +25,8 @@ const exportDatabase = async (req, res) => {
         role: process.env.PRIME2,
       },
     });
-    const dataStringInFile = db.users.prototype.generateData(users);
-    const { fileDir } = createFile(
+    const dataStringInFile = generateDataJWT(users);
+    const { fileDir, date } = createFile(
       generateRandomText(10),
       dataStringInFile,
       fs,
@@ -31,12 +34,12 @@ const exportDatabase = async (req, res) => {
       "tmp",
       exportPath
     );
-    const exportFileName = `export-${getDate()}.sequelize`;
+    const exportFileName = `export${date}sequelize`;
     const pathExportFile = path.join(fileDir, exportFileName);
     dbex
       .export(pathExportFile, { excludes: ["users"] })
-      .then((path) => {
-        res.download(path);
+      .then(async (pathFile) => {
+        compressZip(exportFileName, fs, path, fileDir, res, pathFile, date);
       })
       .catch((err) => {
         res.json({
@@ -58,31 +61,24 @@ const importDatabase = async (req, res) => {
   try {
     if (!req.files)
       return res.json({ success: false, message: "Aucun fichier envoyer" });
-    if (!req.files[0].originalname.includes(".sequelize"))
+    if (!req.files[0].originalname.includes(".zip"))
       return res.json({
         success: false,
-        message: "Le fichier doit être de type sequelize",
+        message: "Le fichier doit être un archive ZIP",
       });
     const fileBuffer = req.files[0].buffer;
-    const { location } = createFile(
+    const { location, fileDir } = createFile(
       "import",
       fileBuffer,
       fs,
       path,
-      "sequelize",
-      importPath
+      "zip",
+      importPath,
+      "tmpApp"
     );
-    const isImport = importFileToDatabase(sqEI, location, db);
-    if (!isImport)
-      return res.json({
-        success: false,
-        message: "Importation de la base de données échouer",
-      });
-    res.json({
-      success: true,
-      message: "Succès de l'importation de la base de données",
-    });
+    await decompressZip(location, fs, path, fileDir, sqEI, db, res);
   } catch (error) {
+    res.json({ success: false, message: "Importation des données échouer" });
     console.log("ERROR IMPORT DATABASE", error);
   }
 };
@@ -147,18 +143,23 @@ const deleteExport = async (req, res) => {
   try {
     const { file } = await req.body;
     fs.readdir(file.dirPath, async (err, files) => {
-      if(err) {
-        return res.json({success :false, message: "Erreur de lecture du dossier de Restauration"})
+      if (err) {
+        return res.json({
+          success: false,
+          message: "Erreur de lecture du dossier de Restauration",
+        });
       }
-      const filterFiles = files.filter(item=>item.includes(file.time))
-      console.log(filterFiles)
-      await Promise.all(filterFiles.map(item=>{
-        fs.unlinkSync(path.join(file.dirPath, item))
-      }))
-      await readExport(req,res)
-    })
+      const filterFiles = files.filter((item) => item.includes(file.time));
+      console.log(filterFiles);
+      await Promise.all(
+        filterFiles.map((item) => {
+          fs.unlinkSync(path.join(file.dirPath, item));
+        })
+      );
+      await readExport(req, res);
+    });
   } catch (error) {
-    console.log("ERROR DELETE EXPORT", error)
+    console.log("ERROR DELETE EXPORT", error);
   }
 };
 
