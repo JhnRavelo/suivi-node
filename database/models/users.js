@@ -50,13 +50,6 @@ module.exports = (sequelize, DataTypes) => {
 
     return accesToken;
   };
-  users.prototype.generateData = (data) => {
-    const dataToken = jwt.sign(
-      { data: JSON.stringify(data) },
-      process.env.DATA_TOKEN
-    );
-    return dataToken;
-  };
   users.prototype.generateRefreshToken = (id) => {
     const refreshToken = jwt.sign(
       {
