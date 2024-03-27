@@ -3,8 +3,8 @@ const fs = require("fs");
 const { Op } = require("sequelize");
 const path = require("path");
 const getProductTypes = require("../utils/getProductTypes");
-const createPDF = require("../utils/createPDF");
-const deletePDF = require("../utils/deletePDF");
+const { createFile } = require("../utils/createFile");
+const deleteFile = require("../utils/deleteFile");
 
 const pdfFolderPath = path.join(__dirname, "..", "public", "pdf");
 
@@ -35,8 +35,16 @@ const addProductType = async (req, res) => {
     if (!newProductType) return res.json({ success: false });
 
     if (pdfBuffer) {
-      const newPDF = await createPDF(req, pdfFolderPath, pdfBuffer, fs, path);
-      newProductType.pdf = newPDF;
+      const { location } = createFile(
+        req.files[0].originalname.split(".")[0],
+        pdfBuffer,
+        fs,
+        path,
+        "pdf",
+        pdfFolderPath,
+        "public"
+      );
+      newProductType.pdf = location;
       const result = await newProductType.save();
 
       if (!result) return res.json({ success: false });
@@ -60,7 +68,7 @@ const deleteProductType = async (req, res) => {
     });
 
     if (deletedProductType.dataValues?.pdf) {
-      await deletePDF(deletedProductType, pdfFolderPath, fs, path);
+      deleteFile(deletedProductType.pdf, pdfFolderPath, fs, path, "pdf")
     }
     deletedProductType.set({
       name: null,
@@ -94,12 +102,21 @@ const updateProductTypes = async (req, res) => {
     if (!updatedProductType) return res.json({ success: false });
 
     if (updatedProductType.dataValues?.pdf && pdfBuffer) {
-      await deletePDF(updatedProductType, pdfFolderPath, fs, path);
+      deleteFile(updatedProductType.pdf, pdfFolderPath, fs, path, "pdf")
+      // await deletePDF(updatedProductType, pdfFolderPath, fs, path);
     }
 
     if (pdfBuffer) {
-      const newPDF = await createPDF(req, pdfFolderPath, pdfBuffer, fs, path);
-      updatedProductType.pdf = newPDF;
+      const { location } = createFile(
+        req.files[0].originalname.split(".")[0],
+        pdfBuffer,
+        fs,
+        path,
+        "pdf",
+        pdfFolderPath,
+        "public"
+      );
+      updatedProductType.pdf = location;
     }
     updatedProductType.name = name;
     const result = await updatedProductType.save();
