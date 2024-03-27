@@ -2,13 +2,11 @@ const db = require("../database/models");
 const sqEI = require("../database/sequelize-import-export");
 const path = require("path");
 const fs = require("fs");
-const cc = require("node-console-colors");
 const jwt = require("jsonwebtoken");
 const generateRandomText = require("../utils/generateRandomText");
 const readDirectory = require("../utils/readDirectory");
 const getExport = require("../utils/getExport");
 const { createFile } = require("../utils/createFile");
-const importFileToDatabase = require("../utils/importDatabase");
 const createUserViaTmp = require("../utils/createUserViaTmp");
 const compressZip = require("../utils/compressZip");
 const generateDataJWT = require("../utils/generateDataJWT");
@@ -76,7 +74,8 @@ const importDatabase = async (req, res) => {
       importPath,
       "tmpApp"
     );
-    await decompressZip(location, fs, path, fileDir, sqEI, db, res);
+    const result = await decompressZip(location, fs, path, fileDir, sqEI, db);
+    res.json(result);
   } catch (error) {
     res.json({ success: false, message: "Importation des données échouer" });
     console.log("ERROR IMPORT DATABASE", error);
@@ -98,17 +97,12 @@ const restoreExport = async (req, res) => {
   try {
     const { file } = await req.body;
     let result = { success: true, message: "Base de données restaurer" };
-    console.log("FILE", file);
-    fs.readdir(file.dirPath, (err, files) => {
-      if (err) {
-        console.log("ERROR READ DIRECTORY RESTORE EXPORT", err);
-        result.success = false;
-        result.message = "Erreur de lecture du dossier de Restauration";
-      }
+    const files = fs.readdirSync(file.dirPath)
       const filterFiles = files.filter((filterFile) =>
         filterFile.includes(file.time)
       );
-      Promise.all(
+      console.log(filterFiles)
+      await Promise.all(
         filterFiles.map(async (filterFile) => {
           if (filterFile.split(".")[1].includes("tmp")) {
             await createUserViaTmp(
@@ -118,21 +112,23 @@ const restoreExport = async (req, res) => {
               db
             );
           } else {
-            const error = await importFileToDatabase(
-              sqEI,
+            const response = await decompressZip(
               path.join(file.dirPath, filterFile),
-              db
+              fs,
+              path,
+              importPath,
+              sqEI,
+              db,
+              "restore"
             );
-            if (error) {
-              result.success = false;
-              result.message = "Erreur durant l'importation de la base";
-              return;
+            if (!response.success) {
+              result.success = response.success;
+              result.message = response.message;
             }
           }
         })
       );
       res.json(result);
-    });
   } catch (error) {
     res.json({ success: false, message: "Erreur de la Restauration" });
     console.log("ERROR RESTORE EXPORT", error);
@@ -150,7 +146,6 @@ const deleteExport = async (req, res) => {
         });
       }
       const filterFiles = files.filter((item) => item.includes(file.time));
-      console.log(filterFiles);
       await Promise.all(
         filterFiles.map((item) => {
           fs.unlinkSync(path.join(file.dirPath, item));

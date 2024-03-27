@@ -1,9 +1,12 @@
 const archiver = require("archiver");
+archiver.registerFormat("zip-encrypted", require("archiver-zip-encrypted"));
 
 const compressZip = async (zipFile, fs, path, dirPath, res, filePath, date) => {
   const output = fs.createWriteStream(path.join(dirPath, `export${date}zip`));
-  const archive = archiver("zip", {
-    zlib: { level: 9 },
+  const archive = archiver.create("zip-encrypted", {
+    zlib: { level: 8 },
+    encryptionMethod: process.env.ZIP_METHOD,
+    password: process.env.ZIP_PASSWORD,
   });
   output.on("close", function () {
     console.log(archive.pointer() + " total bytes");

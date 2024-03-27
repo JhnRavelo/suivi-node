@@ -62,7 +62,7 @@ const refresh = async (req, res) => {
       }
     );
   } catch (error) {
-    console.log(error);
+    console.log("ERROR REFRESH", error);
   }
 };
 
@@ -106,7 +106,6 @@ const handleRefreshToken = async (req, res) => {
 
       return res.sendStatus(403);
     }
-    console.log("ERROR");
 
     jwt.verify(
       refreshToken,
@@ -144,7 +143,7 @@ const handleRefreshToken = async (req, res) => {
       }
     );
   } catch (error) {
-    console.log(error);
+    console.log("ERROR REFRESHTOKEN", error);
   }
 };
 

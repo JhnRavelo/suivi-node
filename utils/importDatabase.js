@@ -9,11 +9,11 @@ const importFileToDatabase = (sqEI, location, db) => {
   const error = dbex
     .import(location, { overwrite: true, excludes: ["users"] })
     .then(() => {
-      return false;
+      return true;
     })
     .catch((err) => {
       console.log("ERROR IMPORT SEQUELIZE", err);
-      return true;
+      return false;
     });
   return error;
 };

@@ -184,9 +184,6 @@ const getAllUsers = async (req, res) => {
     const allUsers = await users.findAll({
       where: {
         role: process.env.PRIME2,
-        email: {
-          [Op.not]: null,
-        },
       },
     });
 

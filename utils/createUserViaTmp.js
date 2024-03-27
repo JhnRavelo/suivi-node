@@ -1,5 +1,4 @@
 const verifyUserAndCreate = async (row, db) => {
-  console.log("ID", row.id);
   const existUser = await db.users.findOne({ where: { id: row.id } });
   if (existUser) {
     existUser.set(row);
