@@ -103,7 +103,6 @@ const updateProductTypes = async (req, res) => {
 
     if (updatedProductType.dataValues?.pdf && pdfBuffer) {
       deleteFile(updatedProductType.pdf, pdfFolderPath, fs, path, "pdf")
-      // await deletePDF(updatedProductType, pdfFolderPath, fs, path);
     }
 
     if (pdfBuffer) {
