@@ -10,12 +10,11 @@ const {
 const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
-const cc = require("node-console-colors");
 const sequelize = require("sequelize");
 const getSuivis = require("../utils/getSuivis");
-const deleteImage = require("../utils/deleteImage");
 const createImage = require("../utils/createImage");
 const getSuivisByProduct = require("../utils/getSuivisByProduct");
+const deleteFile = require("../utils/deleteFile");
 
 const imgPath = path.join(__dirname, "..", "public", "img");
 
@@ -130,10 +129,10 @@ const deleteSuivi = async (req, res) => {
 
     if (galleryArray) {
       galleryArray.map((gallery) => {
-        deleteImage(gallery, imgPath, fs, path);
+        deleteFile(gallery, imgPath, fs, path, "img");
       });
     } else if (!galleryArray && galleryString && galleryString != "null") {
-      deleteImage(galleryString, imgPath, fs, path);
+      deleteFile(galleryString, imgPath, fs, path, "img");
     }
     const result = await deleteSuivi.destroy();
 
@@ -233,14 +232,14 @@ const updateUpload = async (req, res, productId, updatedUpload) => {
 
     if (updateGalleryArray) {
       updateGalleryArray.map((gallery) => {
-        deleteImage(gallery, imgPath, fs, path);
+        deleteFile(gallery, imgPath, fs, path, "img");
       });
     } else if (
       !updateGalleryArray &&
       updateGalleryString &&
       updateGalleryString != ""
     ) {
-      deleteImage(updateGalleryArray, imgPath, fs, path);
+      deleteFile(updateGalleryArray, imgPath, fs, path, "img");
     }
     updatedUpload.observation = `${observation ? observation : ""};${
       newGallery ? newGallery : ""
