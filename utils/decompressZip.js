@@ -50,6 +50,10 @@ const decompressZip = async (zipPath, fs, path, dirPath, sqEI, db, action) => {
     return result;
   } catch (error) {
     console.log("DECOMPRESS ERROR", error);
+    if (action != "restore") {
+      fs.unlinkSync(zipPath);
+    }
+    fsExtra.remove(outputPath);
     return {
       success: false,
       message: "Erreur lors de l'extraction du fichier ZIP",

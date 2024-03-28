@@ -285,7 +285,6 @@ const deleteUser = async (req, res) => {
       phone: null,
       createdAt: null,
       updatedAt: null,
-      role: null
     });
     const result = await deletedUser.save();
 

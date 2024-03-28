@@ -34,6 +34,7 @@ const getLogs = async (req, res) => {
       attributes: [
         [sequelize.literal("YEAR(logs.createdAt)"), "year"],
         "createdAt",
+        "unRead"
       ],
       order: [["createdAt", "DESC"]],
     });
