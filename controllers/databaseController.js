@@ -74,7 +74,15 @@ const importDatabase = async (req, res) => {
       importPath,
       "tmpApp"
     );
-    const result = await decompressZip(location, fs, path, fileDir, sqEI, db);
+    const result = await decompressZip(
+      location,
+      fs,
+      path,
+      fileDir,
+      sqEI,
+      db,
+      "import"
+    );
     res.json(result);
   } catch (error) {
     res.json({ success: false, message: "Importation des données échouer" });
@@ -97,38 +105,37 @@ const restoreExport = async (req, res) => {
   try {
     const { file } = await req.body;
     let result = { success: true, message: "Base de données restaurer" };
-    const files = fs.readdirSync(file.dirPath)
-      const filterFiles = files.filter((filterFile) =>
-        filterFile.includes(file.time)
-      );
-      console.log(filterFiles)
-      await Promise.all(
-        filterFiles.map(async (filterFile) => {
-          if (filterFile.split(".")[1].includes("tmp")) {
-            await createUserViaTmp(
-              fs,
-              path.join(file.dirPath, filterFile),
-              jwt,
-              db
-            );
-          } else {
-            const response = await decompressZip(
-              path.join(file.dirPath, filterFile),
-              fs,
-              path,
-              importPath,
-              sqEI,
-              db,
-              "restore"
-            );
-            if (!response.success) {
-              result.success = response.success;
-              result.message = response.message;
-            }
+    const files = fs.readdirSync(file.dirPath);
+    const filterFiles = files.filter((filterFile) =>
+      filterFile.includes(file.time)
+    );
+    await Promise.all(
+      filterFiles.map(async (filterFile) => {
+        if (filterFile.split(".")[1].includes("tmp")) {
+          await createUserViaTmp(
+            fs,
+            path.join(file.dirPath, filterFile),
+            jwt,
+            db
+          );
+        } else {
+          const response = await decompressZip(
+            path.join(file.dirPath, filterFile),
+            fs,
+            path,
+            importPath,
+            sqEI,
+            db,
+            "restore"
+          );
+          if (!response.success) {
+            result.success = response.success;
+            result.message = response.message;
           }
-        })
-      );
-      res.json(result);
+        }
+      })
+    );
+    res.json(result);
   } catch (error) {
     res.json({ success: false, message: "Erreur de la Restauration" });
     console.log("ERROR RESTORE EXPORT", error);
