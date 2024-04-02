@@ -71,7 +71,6 @@ const handleRefreshToken = async (req, res) => {
     const cookie = await req.cookies;
 
     if (!cookie?.jwt_ea_suivi) return res.sendStatus(401);
-
     const refreshToken = cookie.jwt_ea_suivi;
     res.clearCookie("jwt_ea_suivi", {
       httpOnly: true,
@@ -132,13 +131,15 @@ const handleRefreshToken = async (req, res) => {
           secure: true,
           maxAge: 24 * 60 * 60 * 1000,
         });
-
         res.json({
           success: true,
-          role,
-          accessToken,
-          name: user.name,
-          email: user.email,
+          user: {
+            role,
+            accessToken,
+            name: user.name,
+            email: user.email,
+            avatar: user.avatar,
+          },
         });
       }
     );
