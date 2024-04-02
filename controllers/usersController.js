@@ -1,6 +1,11 @@
 const { Op } = require("sequelize");
 const { users } = require("../database/models");
 const bcrypt = require("bcrypt");
+const path = require("path");
+const { handleRefreshToken } = require("./refreshController");
+const FileHandler = require("../class/fileHandler");
+
+const avatarPath = path.join(__dirname, "..", "public", "avatar");
 
 const login = async (req, res) => {
   const { email, password } = await req.body;
@@ -135,10 +140,13 @@ const userLoginWeb = async (req, res) => {
     });
     res.json({
       success: true,
-      accessToken,
-      role,
-      name: userLogged.dataValues.name,
-      email: userLogged.dataValues.email,
+      user: {
+        accessToken,
+        role,
+        name: userLogged.name,
+        email: userLogged.email,
+        avatar: userLogged.avatar,
+      },
     });
   } catch (error) {
     res.json({ success: false, error: "Problème de serveur" });
@@ -266,6 +274,36 @@ const updateUser = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const fileHandler = new FileHandler();
+    const { name, password } = await req.body;
+    if (!name) return res.json({ success: false });
+    const user = await users.findOne({
+      where: {
+        id: req.user,
+      },
+    });
+    if (!user) return res.json({ success: false });
+    if (user.avatar) {
+      fileHandler.deleteFileFromDatabase(user.avatar, avatarPath, "avatar")
+    }
+    if (req.files.length > 0) {
+      const location = await fileHandler.createImage(req, avatarPath)
+      user.avatar = location;
+    }
+    if (password) user.password = await bcrypt.hash(password, 10);
+    user.name = name;
+    const result = await user.save();
+
+    if (!result) return res.json({ success: false });
+    fileHandler.generateUser(user);
+    await handleRefreshToken(req, res);
+  } catch (error) {
+    console.log("ERROR UPDATE PROFILE", error);
+  }
+};
+
 const deleteUser = async (req, res) => {
   try {
     const id = await req.params.id;
@@ -306,4 +344,5 @@ module.exports = {
   addUser,
   updateUser,
   deleteUser,
+  updateProfile,
 };
