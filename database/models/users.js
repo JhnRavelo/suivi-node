@@ -34,6 +34,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    avatar: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    }
   });
 
   users.prototype.generateToken = (id, role) => {
