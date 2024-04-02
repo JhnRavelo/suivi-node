@@ -2,15 +2,11 @@ const db = require("../database/models");
 const sqEI = require("../database/sequelize-import-export");
 const path = require("path");
 const fs = require("fs");
-const jwt = require("jsonwebtoken");
 const generateRandomText = require("../utils/generateRandomText");
-const readDirectory = require("../utils/readDirectory");
-const getExport = require("../utils/getExport");
-const { createFile } = require("../utils/createFile");
 const createUserViaTmp = require("../utils/createUserViaTmp");
-const compressZip = require("../utils/compressZip");
 const generateDataJWT = require("../utils/generateDataJWT");
-const decompressZip = require("../utils/decompressZip");
+const FileHandler = require("../class/fileHandler");
+const fileHandler = new FileHandler();
 
 const exportPath = path.join(__dirname, "..", "database", "export");
 const importPath = path.join(__dirname, "..", "database", "import");
@@ -24,11 +20,9 @@ const exportDatabase = async (req, res) => {
       },
     });
     const dataStringInFile = generateDataJWT(users);
-    const { fileDir, date } = createFile(
+    const { fileDir, date } = fileHandler.createFile(
       generateRandomText(10),
       dataStringInFile,
-      fs,
-      path,
       "tmp",
       exportPath
     );
@@ -37,7 +31,7 @@ const exportDatabase = async (req, res) => {
     dbex
       .export(pathExportFile, { excludes: ["users"] })
       .then(async (pathFile) => {
-        compressZip(exportFileName, fs, path, fileDir, res, pathFile, date);
+        fileHandler.compressZip(exportFileName, fileDir, res, pathFile, date);
       })
       .catch((err) => {
         res.json({
@@ -65,24 +59,14 @@ const importDatabase = async (req, res) => {
         message: "Le fichier doit être un archive ZIP",
       });
     const fileBuffer = req.files[0].buffer;
-    const { location, fileDir } = createFile(
+    const { location, fileDir } = fileHandler.createFile(
       "import",
       fileBuffer,
-      fs,
-      path,
       "zip",
       importPath,
       "tmpApp"
     );
-    const result = await decompressZip(
-      location,
-      fs,
-      path,
-      fileDir,
-      sqEI,
-      db,
-      "import"
-    );
+    const result = await fileHandler.decompressZip(location, fileDir, "import");
     res.json(result);
   } catch (error) {
     res.json({ success: false, message: "Importation des données échouer" });
@@ -92,8 +76,7 @@ const importDatabase = async (req, res) => {
 
 const readExport = async (req, res) => {
   try {
-    const exportDirs = readDirectory(exportPath);
-    const files = await getExport(exportDirs, path, exportPath);
+    const files = await fileHandler.getExport();
     res.json({ success: true, files: files });
   } catch (error) {
     res.json({ success: false });
@@ -112,20 +95,11 @@ const restoreExport = async (req, res) => {
     await Promise.all(
       filterFiles.map(async (filterFile) => {
         if (filterFile.split(".")[1].includes("tmp")) {
-          await createUserViaTmp(
-            fs,
-            path.join(file.dirPath, filterFile),
-            jwt,
-            db
-          );
+          await createUserViaTmp(path.join(file.dirPath, filterFile));
         } else {
-          const response = await decompressZip(
+          const response = await fileHandler.decompressZip(
             path.join(file.dirPath, filterFile),
-            fs,
-            path,
             importPath,
-            sqEI,
-            db,
             "restore"
           );
           if (!response.success) {

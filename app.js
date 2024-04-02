@@ -2,58 +2,19 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
-const jwt = require("jsonwebtoken");
-const path = require("path");
+const db = require("./database/models")
 require("dotenv").config();
-const db = require("./database/models");
-const fs = require("fs");
-const generateRandomText = require("./utils/generateRandomText");
-const createUserViaTmp = require("./utils/createUserViaTmp");
-const generateDataJWT = require("./utils/generateDataJWT");
-
 const app = express();
 
-const pathExport = path.join(__dirname, "database", "export");
 db.sequelize.options.logging = false;
 db.sequelize.sync().then(() => {
   app.listen(process.env.SERVER_PORT, async () => {
+    const fileHandler = new FileHandler
     try {
       const user = await db.users.findOne({
         where: { role: process.env.PRIME },
       });
-      if (user) {
-        const stringDataUser = generateDataJWT(user);
-        fs.readdir(pathExport, (err, files) => {
-          if (err) return console.log("ERROR READ DIRECTORY", err);
-          const tempFile = files.find((item) => item.includes(".tmp"));
-          if (tempFile) {
-            fs.unlinkSync(path.join(pathExport, tempFile));
-          }
-          const { location } = createFile(
-            generateRandomText(10),
-            stringDataUser,
-            fs,
-            path,
-            "tmp",
-            pathExport,
-            "tmpApp"
-          );
-          if (!location) return console.log("ERROR CREATE FILE");
-        });
-      } else {
-        fs.readdir(pathExport, async (err, files) => {
-          if (err) return console.log("ERROR READ DIRECTORY", err);
-          const tempFile = files.find((item) => item.includes(".tmp"));
-          if (tempFile) {
-            await createUserViaTmp(
-              fs,
-              path.join(pathExport, tempFile),
-              jwt,
-              db
-            );
-          }
-        });
-      }
+      fileHandler.generateUser(user)
     } catch (error) {
       console.log("ERROR SAVE USER", error);
     }
@@ -104,5 +65,5 @@ app.use("/log", logsRouter);
 const problemsRouter = require("./routers/problemsRouter");
 app.use("/problem", problemsRouter);
 const databaseRouter = require("./routers/databaseRouter");
-const { createFile } = require("./utils/createFile");
+const FileHandler = require("./class/fileHandler");
 app.use("/data", databaseRouter);

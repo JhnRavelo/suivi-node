@@ -1,10 +1,9 @@
 const { productTypes } = require("../database/models");
-const fs = require("fs");
 const { Op } = require("sequelize");
 const path = require("path");
 const getProductTypes = require("../utils/getProductTypes");
-const { createFile } = require("../utils/createFile");
-const deleteFile = require("../utils/deleteFile");
+const FileHandler = require("../class/fileHandler");
+const fileHandler = new FileHandler();
 
 const pdfFolderPath = path.join(__dirname, "..", "public", "pdf");
 
@@ -22,8 +21,14 @@ const addProductType = async (req, res) => {
   try {
     const { name } = await req.body;
     let pdfBuffer;
+    let fileNames;
 
-    if (req?.files[0]?.buffer) {
+    if (req.files.length > 0) {
+      fileNames = req.files[0].originalname.split(".");
+      if (fileNames[fileNames.length - 1] !== "pdf") {
+        console.log("ERROR PDF");
+        return res.json({ success: false });
+      }
       pdfBuffer = req?.files[0]?.buffer;
     }
 
@@ -35,11 +40,9 @@ const addProductType = async (req, res) => {
     if (!newProductType) return res.json({ success: false });
 
     if (pdfBuffer) {
-      const { location } = createFile(
-        req.files[0].originalname.split(".")[0],
+      const { location } = fileHandler.createFile(
+        fileNames[0],
         pdfBuffer,
-        fs,
-        path,
         "pdf",
         pdfFolderPath,
         "public"
@@ -68,7 +71,11 @@ const deleteProductType = async (req, res) => {
     });
 
     if (deletedProductType.dataValues?.pdf) {
-      deleteFile(deletedProductType.pdf, pdfFolderPath, fs, path, "pdf")
+      fileHandler.deleteFileFromDatabase(
+        deletedProductType.pdf,
+        pdfFolderPath,
+        "pdf"
+      );
     }
     deletedProductType.set({
       name: null,
@@ -102,15 +109,17 @@ const updateProductTypes = async (req, res) => {
     if (!updatedProductType) return res.json({ success: false });
 
     if (updatedProductType.dataValues?.pdf && pdfBuffer) {
-      deleteFile(updatedProductType.pdf, pdfFolderPath, fs, path, "pdf")
+      fileHandler.deleteFileFromDatabase(
+        updatedProductType.pdf,
+        pdfFolderPath,
+        "pdf"
+      );
     }
 
     if (pdfBuffer) {
-      const { location } = createFile(
+      const { location } = fileHandler.createFile(
         req.files[0].originalname.split(".")[0],
         pdfBuffer,
-        fs,
-        path,
         "pdf",
         pdfFolderPath,
         "public"

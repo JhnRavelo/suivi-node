@@ -7,16 +7,14 @@ const {
   logs,
   problems,
 } = require("../database/models");
-const sharp = require("sharp");
-const fs = require("fs");
 const path = require("path");
 const sequelize = require("sequelize");
 const getSuivis = require("../utils/getSuivis");
-const createImage = require("../utils/createImage");
 const getSuivisByProduct = require("../utils/getSuivisByProduct");
-const deleteFile = require("../utils/deleteFile");
+const FileHandler = require("../class/fileHandler");
 
 const imgPath = path.join(__dirname, "..", "public", "img");
+const fileHandler = new FileHandler
 
 const getByProduct = async (req, res) => {
   try {
@@ -129,10 +127,10 @@ const deleteSuivi = async (req, res) => {
 
     if (galleryArray) {
       galleryArray.map((gallery) => {
-        deleteFile(gallery, imgPath, fs, path, "img");
+        fileHandler.deleteFileFromDatabase(gallery, imgPath, "img");
       });
     } else if (!galleryArray && galleryString && galleryString != "null") {
-      deleteFile(galleryString, imgPath, fs, path, "img");
+      fileHandler.deleteFileFromDatabase(galleryString, imgPath, "img");
     }
     const result = await deleteSuivi.destroy();
 
@@ -167,7 +165,7 @@ const uploadImageSuivi = async (req, res, addedSuivi, productId) => {
     let gallery;
 
     if (req?.files?.length) {
-      gallery = await createImage(req, imgPath, sharp, path, fs);
+      gallery = await fileHandler.createImage(req, imgPath);
     }
     let observation = addedSuivi.dataValues.observation;
     addedSuivi.observation = `${observation}${gallery ? gallery : ""}`;
@@ -221,7 +219,7 @@ const updateUpload = async (req, res, productId, updatedUpload) => {
     observation = updatedUpload?.dataValues?.observation?.split(";")[0];
 
     if (req?.files?.length) {
-      newGallery = await createImage(req, imgPath, sharp, path, fs);
+      newGallery = await fileHandler.createImage(req, imgPath);
     }
     const updateGalleryString =
       updatedUpload?.dataValues?.observation?.split(";")[1];
@@ -232,14 +230,14 @@ const updateUpload = async (req, res, productId, updatedUpload) => {
 
     if (updateGalleryArray) {
       updateGalleryArray.map((gallery) => {
-        deleteFile(gallery, imgPath, fs, path, "img");
+        fileHandler.deleteFileFromDatabase(gallery, imgPath, "img");
       });
     } else if (
       !updateGalleryArray &&
       updateGalleryString &&
       updateGalleryString != ""
     ) {
-      deleteFile(updateGalleryArray, imgPath, fs, path, "img");
+      fileHandler.deleteFileFromDatabase(updateGalleryArray, imgPath, "img");
     }
     updatedUpload.observation = `${observation ? observation : ""};${
       newGallery ? newGallery : ""
