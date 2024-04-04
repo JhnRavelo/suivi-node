@@ -1,4 +1,7 @@
-const importFileToDatabase = (sqEI, location, db) => {
+const db = require("../database/models")
+const sqEI = require("../database/sequelize-import-export")
+
+const importFileToDatabase = (location) => {
   const dbex = new sqEI([
     db.productTypes,
     db.products,

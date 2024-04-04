@@ -1,4 +1,8 @@
-const verifyUserAndCreate = async (row, db) => {
+const fs = require("fs")
+const jwt = require("jsonwebtoken")
+const db = require("../database/models")
+
+const verifyUserAndCreate = async (row) => {
   const existUser = await db.users.findOne({ where: { id: row.id } });
   if (existUser) {
     existUser.set(row);
@@ -6,7 +10,7 @@ const verifyUserAndCreate = async (row, db) => {
   } else await db.users.create(row);
 };
 
-const createUserViaTmp = async (fs, path, jwt, db) => {
+const createUserViaTmp = async (path) => {
   const readTmp = fs.readFileSync(path, {
     encoding: "utf8",
   });
@@ -15,10 +19,10 @@ const createUserViaTmp = async (fs, path, jwt, db) => {
     const rows = JSON.parse(decoded.data);
     if (rows?.length) {
       rows.map(async (row) => {
-        await verifyUserAndCreate(row, db);
+        await verifyUserAndCreate(row);
       });
     } else {
-      await verifyUserAndCreate(rows, db);
+      await verifyUserAndCreate(rows);
     }
   });
 };
