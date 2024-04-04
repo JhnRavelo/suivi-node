@@ -1,7 +1,6 @@
 const { productTypes } = require("../database/models");
 const { Op } = require("sequelize");
 const path = require("path");
-const getProductTypes = require("../utils/getProductTypes");
 const FileHandler = require("../class/fileHandler");
 const fileHandler = new FileHandler();
 
@@ -9,8 +8,16 @@ const pdfFolderPath = path.join(__dirname, "..", "public", "pdf");
 
 const getAllProductTypes = async (req, res) => {
   try {
-    const allProductTypes = await getProductTypes(productTypes, res, Op);
-    res.json({ success: true, productTypes: allProductTypes });
+    const allProductTypes = await productTypes.findAll({
+      where: {
+        name: {
+          [Op.not]: null,
+        },
+      },
+    });
+
+    if (!allProductTypes) return res.json({ success: false });
+    res.json({ success: true, types: allProductTypes });
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR GETALLPRODUCTTYPES", error);
@@ -52,8 +59,7 @@ const addProductType = async (req, res) => {
 
       if (!result) return res.json({ success: false });
     }
-    const allProductTypes = await getProductTypes(productTypes, res, Op);
-    res.json({ success: true, types: allProductTypes });
+    await getAllProductTypes(req, res);
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR ADDPRODUCTTYPE", error);
@@ -86,8 +92,7 @@ const deleteProductType = async (req, res) => {
     const result = await deletedProductType.save();
 
     if (!result) return res.json({ success: false });
-    const allProductTypes = await getProductTypes(productTypes, res, Op);
-    res.json({ success: true, types: allProductTypes });
+    await getAllProductTypes(req, res);
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR DELETEPRODUCTTYPE", error);
@@ -130,8 +135,7 @@ const updateProductTypes = async (req, res) => {
     const result = await updatedProductType.save();
 
     if (!result) return res.json({ success: false });
-    const allProductTypes = await getProductTypes(productTypes, res, Op);
-    res.json({ success: true, types: allProductTypes });
+    await getAllProductTypes(req, res);
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR UPDATEPRODUCTTYPE", error);
