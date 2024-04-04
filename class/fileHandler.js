@@ -292,11 +292,11 @@ class FileHandler {
         if (!location) return console.log("ERROR CREATE FILE");
       });
     } else {
-      fs.readdir(pathExport, async (err, files) => {
+      fs.readdir(this.pathExport, async (err, files) => {
         if (err) return console.log("ERROR READ DIRECTORY", err);
         const tempFile = files.find((item) => item.includes(".tmp"));
         if (tempFile) {
-          await createUserViaTmp(path.join(pathExport, tempFile));
+          await createUserViaTmp(path.join(this.pathExport, tempFile));
         }
       });
     }
