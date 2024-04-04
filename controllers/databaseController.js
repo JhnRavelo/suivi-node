@@ -28,6 +28,14 @@ const exportDatabase = async (req, res) => {
     );
     const exportFileName = `export${date}sequelize`;
     const pathExportFile = path.join(fileDir, exportFileName);
+    await db.logs.update(
+      { unRead: false },
+      {
+        where: {
+          unRead: true,
+        },
+      }
+    );
     dbex
       .export(pathExportFile, { excludes: ["users"] })
       .then(async (pathFile) => {
