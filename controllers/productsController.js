@@ -1,5 +1,4 @@
-const { products, productTypes, users } = require("../database/models");
-const getProducts = require("../utils/getProducts");
+const { products } = require("../database/models");
 
 const addProduct = async (req, res) => {
   try {
@@ -10,6 +9,7 @@ const addProduct = async (req, res) => {
 
     if (!type || !location || !devis || !dimension)
       return res.json({ success: false });
+
     if (tech) {
       productAdded = await products.create({
         productTypeId: type,
@@ -23,15 +23,7 @@ const addProduct = async (req, res) => {
       });
 
       if (!productAdded) return res.json({ success: false });
-
-      const filterProducts = await getProducts(
-        products,
-        productTypes,
-        users,
-        res
-      );
-
-      res.json({ success: true, products: filterProducts });
+      await getAllProducts(req, res)
     } else {
       productAdded = await products.create({
         productTypeId: type,
@@ -45,27 +37,22 @@ const addProduct = async (req, res) => {
       });
 
       if (!productAdded) return res.json({ success: false });
-
       res.json({ success: true, product: productAdded.id });
     }
   } catch (error) {
     res.json({ success: false });
-    console.log(error);
+    console.log("ERROR ADD PRODUCT", error);
   }
 };
 
 const getAllProducts = async (req, res) => {
   try {
-    const filterProducts = await getProducts(
-      products,
-      productTypes,
-      users,
-      res
-    );
+    const allProducts = await products.findAll();
 
-    res.json({ success: true, products: filterProducts });
+  if (!allProducts) return res.json({ success: false });
+    res.json({ success: true, products: allProducts });
   } catch (error) {
-    console.log(error);
+    console.log("ERROR GET ALL PRODUCT", error);
     res.json({ success: false });
   }
 };
@@ -75,7 +62,6 @@ const deleteProduct = async (req, res) => {
     const id = req.params.id;
 
     if (!id) return res.json({ success: false });
-
     const deletedProduct = await products.findOne({
       where: {
         id: id,
@@ -83,21 +69,12 @@ const deleteProduct = async (req, res) => {
     });
 
     if (!deletedProduct) return res.json({ success: false });
-
     const result = await deletedProduct.destroy();
 
     if (!result) return res.json({ success: false });
-
-    const filterProducts = await getProducts(
-      products,
-      productTypes,
-      users,
-      res
-    );
-
-    res.json({ success: true, products: filterProducts });
+    await getAllProducts(req, res)
   } catch (error) {
-    console.log(error);
+    console.log("ERROR DELETE PRODUCT", error);
   }
 };
 
@@ -116,9 +93,9 @@ const updateProduct = async (req, res) => {
     } = await req.body;
     const idUser = req.user;
     let result;
+
     if (!type || !location || !devis || !dimension || !id)
       return res.json({ success: false });
-
     const updatedProduct = await products.findOne({
       where: {
         id: id,
@@ -150,17 +127,13 @@ const updateProduct = async (req, res) => {
         chantier,
       });
     }
-
     result = await updatedProduct.save();
 
     if (!result) return res.json({ success: false });
-
-    const allProducts = await getProducts(products, productTypes, users, res);
-
-    res.json({ success: true, products: allProducts });
+    await getAllProducts(req, res)
   } catch (error) {
     res.json({ success: false });
-    console.log(error);
+    console.log("ERROR UPDATE PRODUCT", error);
   }
 };
 

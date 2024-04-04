@@ -22,7 +22,7 @@ const getLogs = async (req, res) => {
             },
             {
               model: users,
-              attributes: ["name"],
+              attributes: ["name", "id"],
             },
             {
               model: problems,
@@ -34,7 +34,7 @@ const getLogs = async (req, res) => {
       attributes: [
         [sequelize.literal("YEAR(logs.createdAt)"), "year"],
         "createdAt",
-        "unRead"
+        "unRead",
       ],
       order: [["createdAt", "DESC"]],
     });
@@ -46,8 +46,7 @@ const getLogs = async (req, res) => {
 
     allLogs.map((log) => {
       const value = log.dataValues;
-      const problem = getProblem(value.suivi);
-      if (value.unRead) {
+      if (value.unRead && value.suivi) {
         filterLogs.push(
           `${value.suivi.user.name} a effectué un suivi du produit ${
             value.suivi.product.productType.name
@@ -57,15 +56,25 @@ const getLogs = async (req, res) => {
           )}`
         );
       }
-      logsAll.push({
-        log: `${value.suivi.user.name} a effectué un suivi du produit ${value.suivi.product.productType.name} du devis ${value.suivi.product.devis} associé au client ${value.suivi.product.client}`,
-        year: value.year,
-        createdAt: value.createdAt,
-        problem: problem,
-        solution: value.suivi.solution,
-      });
+
+      if (value.suivi) {
+        const problem = getProblem(value.suivi);
+        logsAll.push({
+          year: value.year,
+          createdAt: value.createdAt,
+          problem: problem,
+          solution: value.suivi.solution,
+          productId: value.suivi.product.id,
+          userId: value.suivi.user.id,
+          productTypeId: value.suivi.product.productType.id,
+        });
+      }
     });
-    res.json({ success: true, logs: filterLogs, allLogs: logsAll });
+    res.json({
+      success: true,
+      logs: filterLogs,
+      allLogs: logsAll,
+    });
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR getLogs", error);
