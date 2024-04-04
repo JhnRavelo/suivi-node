@@ -8,8 +8,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     unRead: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true
-    }
+      defaultValue: true,
+    },
   });
 
   logs.associate = (models) => {

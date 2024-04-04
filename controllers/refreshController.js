@@ -19,7 +19,7 @@ const refresh = async (req, res) => {
         process.env.REFRESH_TOKEN,
         async (err, decoded) => {
           if (err) {
-            return res.sendStatus(403);
+            console.log("ERROR REFRESH", err)
           }
           const hackedUser = await users.findOne({
             where: {
