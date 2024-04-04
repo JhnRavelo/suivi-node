@@ -14,7 +14,7 @@ const getSuivisByProduct = require("../utils/getSuivisByProduct");
 const FileHandler = require("../class/fileHandler");
 
 const imgPath = path.join(__dirname, "..", "public", "img");
-const fileHandler = new FileHandler
+const fileHandler = new FileHandler();
 
 const getByProduct = async (req, res) => {
   try {
@@ -390,7 +390,7 @@ const getStatPerYear = async (req, res) => {
       attributes: [
         [sequelize.literal("YEAR(suivis.createdAt)"), "year"],
         [sequelize.literal("MONTH(suivis.createdAt)"), "month"],
-        [sequelize.fn("COUNT", sequelize.col("suivis.id")), "suiviCount"],
+        [sequelize.fn("COUNT", sequelize.col("suivis.id")), "count"],
       ],
       group: ["year", "month"],
       order: ["month"],
@@ -434,12 +434,29 @@ const getStatPerYear = async (req, res) => {
         }
       })
     );
+
+    const suiviByProduct = await suivis.findAll({
+      attributes: [
+        [sequelize.literal("YEAR(suivis.createdAt)"), "year"],
+        [sequelize.literal("MONTH(suivis.createdAt)"), "month"],
+        [sequelize.fn("COUNT", sequelize.col("productId")), "count"],
+        "productId",
+      ],
+      include: [
+        {
+          model: products,
+        },
+      ],
+      group: ["productId", "year", "month"],
+    });
+
     res.json({
       success: true,
       statProblems: statProblems,
       statTop: statTop,
       statSuivis: suiviByMonthYear,
       statProductTypes,
+      statProducts: suiviByProduct
     });
   } catch (error) {
     res.json({ success: false });
