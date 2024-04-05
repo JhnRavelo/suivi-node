@@ -4,10 +4,8 @@ const {
   suivis,
   productTypes,
   users,
-  problems,
 } = require("../database/models");
 const sequelize = require("sequelize");
-const getProblem = require("../utils/getProblem");
 
 const getLogs = async (req, res) => {
   try {
@@ -23,10 +21,6 @@ const getLogs = async (req, res) => {
             {
               model: users,
               attributes: ["name", "id"],
-            },
-            {
-              model: problems,
-              as: "problems",
             },
           ],
         },
@@ -58,15 +52,15 @@ const getLogs = async (req, res) => {
       }
 
       if (value.suivi) {
-        const problem = getProblem(value.suivi);
         logsAll.push({
           year: value.year,
           createdAt: value.createdAt,
-          problem: problem,
+          problem: value.suivi.problem,
+          problemId: value.suivi.problemId,
           solution: value.suivi.solution,
-          productId: value.suivi.product.id,
-          userId: value.suivi.user.id,
-          productTypeId: value.suivi.product.productType.id,
+          productId: value.suivi.productId,
+          userId: value.suivi.userId,
+          productTypeId: value.suivi.product.productTypeId,
         });
       }
     });
