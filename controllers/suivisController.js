@@ -299,7 +299,6 @@ const getStatPerYear = async (req, res) => {
         year: value.year,
         productTypeId: value.product.productTypeId,
         count: value.problemCount,
-        name: value.problems.name,
         id: value.problemId,
       };
     });
@@ -311,7 +310,7 @@ const getStatPerYear = async (req, res) => {
           "productCount",
         ],
       ],
-      include: [{ model: products, include: [{ model: productTypes }] }],
+      include: [{ model: products }],
       group: ["suivis.productId", "year"],
       order: [[sequelize.literal("productCount"), "DESC"]],
     });
@@ -323,10 +322,7 @@ const getStatPerYear = async (req, res) => {
         const value = item.dataValues;
         const productCount = value.productCount;
         const year = value.year;
-        const type = value.product.productType.name;
-        const devis = value.product.devis;
-        const client = value.product.client;
-        const chantier = value.product.chantier;
+        const productTypeId = value.product.productTypeId;
         const productId = value.product.id;
         const findNbr = nbrOfYear.find((item) => item.year == year);
         if ((findNbr && findNbr.nbr < 5) || !findNbr) {
@@ -356,7 +352,6 @@ const getStatPerYear = async (req, res) => {
               ],
             ],
             group: "problemId",
-            include: [{ model: problems, as: "problems" }],
             order: [[sequelize.literal("problemCount"), "DESC"]],
             limit: 3,
           });
@@ -365,11 +360,8 @@ const getStatPerYear = async (req, res) => {
             id: productId,
             productCount,
             year,
-            type,
-            devis,
-            client,
-            chantier,
             problems: listProblems,
+            productTypeId,
           };
         } else return undefined;
       })
@@ -406,7 +398,6 @@ const getStatPerYear = async (req, res) => {
 
     if (!suiviByProductTypes) return res.json({ success: false });
     let statProductTypes = [];
-    console.log("STAT TYPES", JSON.stringify(suiviByProductTypes));
     await Promise.all(
       suiviByProductTypes.map(async (item) => {
         const value = item.dataValues;
