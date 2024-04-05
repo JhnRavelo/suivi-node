@@ -146,13 +146,7 @@ const deleteSuivi = async (req, res) => {
       );
       res.json({ success: true, suivis: allSuivis });
     } else {
-      const filterSuivis = await getSuivis(
-        suivis,
-        users,
-        products,
-        productTypes
-      );
-      res.json({ success: true, suivis: filterSuivis });
+      await getAllSuivis(req, res);
     }
   } catch (error) {
     res.json({ success: false });
@@ -262,14 +256,8 @@ const updateUpload = async (req, res, productId, updatedUpload) => {
 const getAllSuivis = async (req, res) => {
   try {
     let year;
-    const filterSuivis = await getSuivis(
-      suivis,
-      users,
-      products,
-      productTypes,
-      res,
-      problems
-    );
+    const filterSuivis = await getSuivis(suivis, products, productTypes);
+    if (!filterSuivis) return res.json({ success: false });
     let years = [];
     const resultYear = filterSuivis.map((item) => {
       const itemYear = item.createdAt.split("-")[0];
@@ -456,7 +444,7 @@ const getStatPerYear = async (req, res) => {
       statTop: statTop,
       statSuivis: suiviByMonthYear,
       statProductTypes,
-      statProducts: suiviByProduct
+      statProducts: suiviByProduct,
     });
   } catch (error) {
     res.json({ success: false });
