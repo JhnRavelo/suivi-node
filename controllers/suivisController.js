@@ -286,6 +286,7 @@ const getStatPerYear = async (req, res) => {
           sequelize.fn("COUNT", sequelize.col("suivis.problemId")),
           "problemCount",
         ],
+        "problemId",
       ],
       group: ["problemId", "year"],
       include: [{ model: products }, { model: problems, as: "problems" }],
@@ -299,6 +300,7 @@ const getStatPerYear = async (req, res) => {
         productTypeId: value.product.productTypeId,
         count: value.problemCount,
         name: value.problems.name,
+        id: value.problemId,
       };
     });
     const productByProblems = await suivis.findAll({
@@ -386,6 +388,7 @@ const getStatPerYear = async (req, res) => {
 
     if (!suiviByMonthYear) return res.json({ success: false });
     const suiviByProductTypes = await products.findAll({
+      attributes: ["productTypeId"],
       include: [
         {
           model: suivis,
@@ -393,9 +396,6 @@ const getStatPerYear = async (req, res) => {
             [sequelize.literal("YEAR(suivis.createdAt)"), "year"],
             [sequelize.fn("COUNT", sequelize.col("productTypeId")), "count"],
           ],
-        },
-        {
-          model: productTypes,
         },
       ],
       group: [
@@ -406,6 +406,7 @@ const getStatPerYear = async (req, res) => {
 
     if (!suiviByProductTypes) return res.json({ success: false });
     let statProductTypes = [];
+    console.log("STAT TYPES", JSON.stringify(suiviByProductTypes));
     await Promise.all(
       suiviByProductTypes.map(async (item) => {
         const value = item.dataValues;
@@ -413,7 +414,7 @@ const getStatPerYear = async (req, res) => {
           await Promise.all(
             value.suivis.map((item) => {
               statProductTypes.push({
-                name: value.productType.name,
+                id: value.productTypeId,
                 year: item.dataValues.year,
                 count: item.dataValues.count,
               });
