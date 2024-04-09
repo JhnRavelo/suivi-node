@@ -2,7 +2,6 @@ const getSuivis = async (
   suivis,
   products,
   productTypes,
-  res,
 ) => {
   const allSuivis = await suivis.findAll({
     include: [

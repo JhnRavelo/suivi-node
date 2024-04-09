@@ -32,7 +32,8 @@ const getByProduct = async (req, res) => {
 
     if (!isEmail) return res.json({ success: false });
 
-    const allSuivi = await getSuivisByProduct(suivis, users, res, id, problems);
+    const allSuivi = await getSuivisByProduct(suivis, users, id, problems);
+    if (!allSuivi) return res.json({ success: false });
 
     const product = await products.findOne({
       where: {
@@ -140,10 +141,10 @@ const deleteSuivi = async (req, res) => {
       const allSuivis = await getSuivisByProduct(
         suivis,
         users,
-        res,
         productId,
         problems
       );
+      if (!allSuivis) return res.json({ success: false });
       res.json({ success: true, suivis: allSuivis });
     } else {
       await getAllSuivis(req, res);
@@ -169,10 +170,10 @@ const uploadImageSuivi = async (req, res, addedSuivi, productId) => {
     const allSuivis = await getSuivisByProduct(
       suivis,
       users,
-      res,
       productId,
       problems
     );
+    if (!allSuivis) return res.json({ success: false });
     res.json({ success: true, suivis: allSuivis });
   } catch (error) {
     res.json({ success: false });
@@ -181,7 +182,7 @@ const uploadImageSuivi = async (req, res, addedSuivi, productId) => {
 };
 
 const updateSuivi = async (req, res) => {
-  const { id, productId, problem, observation, solution } = await req.body;
+  const { id, productId, problem, observation, solution, gallery } = await req.body;
   try {
     if (!id || !productId || !problem || !solution)
       return res.json({ success: false });
@@ -198,21 +199,21 @@ const updateSuivi = async (req, res) => {
     const result = await updatedSuivi.save();
 
     if (!result) return res.json({ success: false });
-    await updateUpload(req, res, productId, updatedSuivi);
+    await updateUpload(req, res, productId, updatedSuivi, gallery);
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR updateSuivi", error);
   }
 };
 
-const updateUpload = async (req, res, productId, updatedUpload) => {
+const updateUpload = async (req, res, productId, updatedUpload, gallery) => {
   let updateGalleryArray;
   let newGallery;
   let observation;
   try {
     observation = updatedUpload?.dataValues?.observation?.split(";")[0];
 
-    if (req?.files?.length) {
+    if (req?.files?.length > 0) {
       newGallery = await fileHandler.createImage(req, imgPath);
     }
     const updateGalleryString =
@@ -222,7 +223,7 @@ const updateUpload = async (req, res, productId, updatedUpload) => {
       updateGalleryArray = updateGalleryString?.split(",");
     }
 
-    if (updateGalleryArray) {
+    if (updateGalleryArray || gallery == ";") {
       updateGalleryArray.map((gallery) => {
         fileHandler.deleteFileFromDatabase(gallery, imgPath, "img");
       });
@@ -242,10 +243,10 @@ const updateUpload = async (req, res, productId, updatedUpload) => {
     const allSuivis = await getSuivisByProduct(
       suivis,
       users,
-      res,
       productId,
       problems
     );
+    if (!allSuivis) return res.json({ success: false });
     res.json({ success: true, suivis: allSuivis });
   } catch (error) {
     res.json({ success: false });

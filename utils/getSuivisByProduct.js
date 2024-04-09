@@ -1,6 +1,6 @@
 const getProblem = require("./getProblem");
 
-const getSuivisByProduct = async (suivis, users, res, productId, problems) => {
+const getSuivisByProduct = async (suivis, users, productId, problems) => {
   const allSuivis = await suivis.findAll({
     where: {
       productId: productId,
@@ -11,7 +11,7 @@ const getSuivisByProduct = async (suivis, users, res, productId, problems) => {
     ],
   });
 
-  if (!allSuivis) return res.json({ success: false });
+  if (!allSuivis) return false;
   const filterSuivis = allSuivis.map((item) => {
     const value = item.dataValues;
     const problem = getProblem(value);
