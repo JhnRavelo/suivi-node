@@ -9,6 +9,7 @@ const getSuivisByProduct = async (suivis, users, productId, problems) => {
       { model: users, attribute: ["id", "name"] },
       { model: problems, as: "problems" },
     ],
+    order: [["createdAt", "DESC"]],
   });
 
   if (!allSuivis) return false;
@@ -21,7 +22,9 @@ const getSuivisByProduct = async (suivis, users, productId, problems) => {
       solution: value.solution,
       observation: value.observation,
       user: `${value?.user?.name ? value?.user?.name : ""}`,
-      createdAt: value.createdAt.split(" ")[0],
+      createdAt: `${value.createdAt.split(" ")[0]}\n${
+        value.createdAt.split(" ")[1]
+      }`,
     };
   });
 

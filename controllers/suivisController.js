@@ -21,7 +21,6 @@ const getByProduct = async (req, res) => {
     const { email, id } = await req.body;
 
     if (!email || !id) return res.json({ success: false });
-
     const isEmail = await users.findOne({
       where: {
         email: {
@@ -31,10 +30,9 @@ const getByProduct = async (req, res) => {
     });
 
     if (!isEmail) return res.json({ success: false });
-
     const allSuivi = await getSuivisByProduct(suivis, users, id, problems);
-    if (!allSuivi) return res.json({ success: false });
 
+    if (!allSuivi) return res.json({ success: false });
     const product = await products.findOne({
       where: {
         id: id,
@@ -60,7 +58,6 @@ const getByProduct = async (req, res) => {
     const allProblems = await problems.findAll({
       where: { productTypeId: productValue.productType.id },
     });
-
     const filterProblems = allProblems.map((item) => {
       return { value: item.dataValues.id, label: item.dataValues.name };
     });
@@ -182,36 +179,36 @@ const uploadImageSuivi = async (req, res, addedSuivi, productId) => {
 };
 
 const updateSuivi = async (req, res) => {
-  const { id, productId, problem, observation, solution, gallery } = await req.body;
+  const { id, productId, problem, observation, solution, gallery } =
+    await req.body;
   try {
+
     if (!id || !productId || !problem || !solution)
       return res.json({ success: false });
     const updatedSuivi = await suivis.findOne({ where: { id: id } });
-    const gallery = updatedSuivi?.dataValues?.observation?.split(";")[1];
-    const updatedObservation = `${observation ? observation : ""};${
-      gallery ? gallery : ""
-    }`;
     updatedSuivi.set({
       problem,
       solution,
-      observation: updatedObservation,
     });
-    const result = await updatedSuivi.save();
+    await updateUpload(req, res, productId, updatedSuivi, gallery, observation);
 
-    if (!result) return res.json({ success: false });
-    await updateUpload(req, res, productId, updatedSuivi, gallery);
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR updateSuivi", error);
   }
 };
 
-const updateUpload = async (req, res, productId, updatedUpload, gallery) => {
+const updateUpload = async (
+  req,
+  res,
+  productId,
+  updatedUpload,
+  gallery,
+  observation
+) => {
   let updateGalleryArray;
   let newGallery;
-  let observation;
   try {
-    observation = updatedUpload?.dataValues?.observation?.split(";")[0];
 
     if (req?.files?.length > 0) {
       newGallery = await fileHandler.createImage(req, imgPath);
@@ -219,23 +216,23 @@ const updateUpload = async (req, res, productId, updatedUpload, gallery) => {
     const updateGalleryString =
       updatedUpload?.dataValues?.observation?.split(";")[1];
 
-    if (updateGalleryString && updateGalleryString != "") {
-      updateGalleryArray = updateGalleryString?.split(",");
+    if (updateGalleryString) {
+      updateGalleryArray = updateGalleryString.split(",");
     }
 
-    if (updateGalleryArray || gallery == ";") {
-      updateGalleryArray.map((gallery) => {
-        fileHandler.deleteFileFromDatabase(gallery, imgPath, "img");
-      });
-    } else if (
-      !updateGalleryArray &&
-      updateGalleryString &&
-      updateGalleryString != ""
-    ) {
-      fileHandler.deleteFileFromDatabase(updateGalleryArray, imgPath, "img");
+    if (updateGalleryArray) {
+      if (newGallery || gallery == ";") {
+        updateGalleryArray.map((gallery) => {
+          fileHandler.deleteFileFromDatabase(gallery, imgPath, "img");
+        });
+      }
     }
     updatedUpload.observation = `${observation ? observation : ""};${
-      newGallery ? newGallery : ""
+      newGallery
+        ? newGallery
+        : gallery == ";"
+        ? ""
+        : updateGalleryString
     }`;
     const result = await updatedUpload.save();
 
@@ -246,6 +243,7 @@ const updateUpload = async (req, res, productId, updatedUpload, gallery) => {
       productId,
       problems
     );
+
     if (!allSuivis) return res.json({ success: false });
     res.json({ success: true, suivis: allSuivis });
   } catch (error) {
