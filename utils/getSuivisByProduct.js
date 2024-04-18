@@ -1,4 +1,6 @@
 const getProblem = require("./getProblem");
+const getSuivisByProductPerMonth = require("./getSuivisByProductPerMonth");
+const sequelize = require("sequelize");
 
 const getSuivisByProduct = async (suivis, users, productId, problems) => {
   const allSuivis = await suivis.findAll({
@@ -12,7 +14,7 @@ const getSuivisByProduct = async (suivis, users, productId, problems) => {
     order: [["createdAt", "DESC"]],
   });
 
-  if (!allSuivis) return false;
+  if (!allSuivis) return { success: false };
   const filterSuivis = allSuivis.map((item) => {
     const value = item.dataValues;
     const problem = getProblem(value);
@@ -28,7 +30,36 @@ const getSuivisByProduct = async (suivis, users, productId, problems) => {
     };
   });
 
-  return filterSuivis;
+  const suivisByProduct = await getSuivisByProductPerMonth();
+  const filterSuivisByProduct = suivisByProduct.filter(
+    (item) => item.productId == productId
+  );
+
+  const uniqueYears = new Set();
+  filterSuivisByProduct.forEach((item) => {
+    uniqueYears.add(item.dataValues.year);
+  });
+  const years = Array.from(uniqueYears);
+
+  const statProblems = await suivis.findAll({
+    where: { productId },
+    attributes: [
+      [sequelize.literal("YEAR(suivis.createdAt)"), "year"],
+      [sequelize.fn("COUNT", sequelize.col("problemId")), "count"],
+      "problemId",
+    ],
+    include: [{ model: problems, as: "problems", attributes: ["name"] }],
+    group: ["year", "problemId"],
+    order: [[sequelize.literal("count"), "DESC"]],
+  });
+
+  return {
+    allSuivis: filterSuivis,
+    years,
+    statProducts: filterSuivisByProduct,
+    success: true,
+    statProblems,
+  };
 };
 
 module.exports = getSuivisByProduct;

@@ -19,11 +19,11 @@ const refresh = async (req, res) => {
         process.env.REFRESH_TOKEN,
         async (err, decoded) => {
           if (err) {
-            console.log("ERROR REFRESH", err)
+            console.log("ERROR HACKED USER REFRESH", err)
           }
           const hackedUser = await users.findOne({
             where: {
-              id: decoded.id,
+              id: decoded?.id,
             },
           });
 
@@ -94,7 +94,7 @@ const handleRefreshToken = async (req, res) => {
           }
           const hackedUser = await users.findOne({
             where: {
-              id: decoded.id,
+              id: decoded?.id,
             },
           });
 

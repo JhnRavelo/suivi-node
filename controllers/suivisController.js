@@ -12,6 +12,7 @@ const sequelize = require("sequelize");
 const getSuivis = require("../utils/getSuivis");
 const getSuivisByProduct = require("../utils/getSuivisByProduct");
 const FileHandler = require("../class/fileHandler");
+const getSuivisByProductPerMonth = require("../utils/getSuivisByProductPerMonth");
 
 const imgPath = path.join(__dirname, "..", "public", "img");
 const fileHandler = new FileHandler();
@@ -30,9 +31,10 @@ const getByProduct = async (req, res) => {
     });
 
     if (!isEmail) return res.json({ success: false });
-    const allSuivi = await getSuivisByProduct(suivis, users, id, problems);
+    const { allSuivis, years, statProducts, success, statProblems } =
+      await getSuivisByProduct(suivis, users, id, problems);
 
-    if (!allSuivi) return res.json({ success: false });
+    if (!success) return res.json({ success });
     const product = await products.findOne({
       where: {
         id: id,
@@ -63,11 +65,14 @@ const getByProduct = async (req, res) => {
     });
 
     res.json({
-      success: true,
-      suivis: allSuivi,
+      success,
+      suivis: allSuivis,
       product: fiche,
       pdf: productValue.productType.pdf,
       problems: filterProblems,
+      statProducts,
+      years,
+      statProblems,
     });
   } catch (error) {
     res.json({ success: false });
@@ -135,14 +140,10 @@ const deleteSuivi = async (req, res) => {
     if (!result) return res.json({ success: false });
 
     if (productId) {
-      const allSuivis = await getSuivisByProduct(
-        suivis,
-        users,
-        productId,
-        problems
-      );
-      if (!allSuivis) return res.json({ success: false });
-      res.json({ success: true, suivis: allSuivis });
+      const { allSuivis, success, statProducts, years } =
+        await getSuivisByProduct(suivis, users, productId, problems);
+      if (!success) return res.json({ success });
+      res.json({ success, suivis: allSuivis, statProducts, years });
     } else {
       await getAllSuivis(req, res);
     }
@@ -164,14 +165,10 @@ const uploadImageSuivi = async (req, res, addedSuivi, productId) => {
     const result = await addedSuivi.save();
 
     if (!result) return res.json({ success: false });
-    const allSuivis = await getSuivisByProduct(
-      suivis,
-      users,
-      productId,
-      problems
-    );
-    if (!allSuivis) return res.json({ success: false });
-    res.json({ success: true, suivis: allSuivis });
+    const { allSuivis, success, statProducts, years } =
+      await getSuivisByProduct(suivis, users, productId, problems);
+    if (!success) return res.json({ success });
+    res.json({ success, suivis: allSuivis, statProducts, years });
   } catch (error) {
     res.json({ success: false });
     console.log("uploadImageSuivi", error);
@@ -182,7 +179,6 @@ const updateSuivi = async (req, res) => {
   const { id, productId, problem, observation, solution, gallery } =
     await req.body;
   try {
-
     if (!id || !productId || !problem || !solution)
       return res.json({ success: false });
     const updatedSuivi = await suivis.findOne({ where: { id: id } });
@@ -191,7 +187,6 @@ const updateSuivi = async (req, res) => {
       solution,
     });
     await updateUpload(req, res, productId, updatedSuivi, gallery, observation);
-
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR updateSuivi", error);
@@ -209,7 +204,6 @@ const updateUpload = async (
   let updateGalleryArray;
   let newGallery;
   try {
-
     if (req?.files?.length > 0) {
       newGallery = await fileHandler.createImage(req, imgPath);
     }
@@ -228,24 +222,16 @@ const updateUpload = async (
       }
     }
     updatedUpload.observation = `${observation ? observation : ""};${
-      newGallery
-        ? newGallery
-        : gallery == ";"
-        ? ""
-        : updateGalleryString
+      newGallery ? newGallery : gallery == ";" ? "" : updateGalleryString
     }`;
     const result = await updatedUpload.save();
 
     if (!result) return res.json({ success: false });
-    const allSuivis = await getSuivisByProduct(
-      suivis,
-      users,
-      productId,
-      problems
-    );
+    const { allSuivis, success, statProducts, years } =
+      await getSuivisByProduct(suivis, users, productId, problems);
 
-    if (!allSuivis) return res.json({ success: false });
-    res.json({ success: true, suivis: allSuivis });
+    if (!success) return res.json({ success });
+    res.json({ success, suivis: allSuivis, years, statProducts });
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR updateUpload", error);
@@ -254,14 +240,12 @@ const updateUpload = async (
 
 const getAllSuivis = async (req, res) => {
   try {
-    let year;
     const filterSuivis = await getSuivis(suivis, products, productTypes);
     if (!filterSuivis) return res.json({ success: false });
     let years = [];
     const resultYear = filterSuivis.map((item) => {
       const itemYear = item.createdAt.split("-")[0];
-      if (itemYear != year) {
-        year = itemYear;
+      if (!years.includes(itemYear)) {
         years.push(itemYear);
       }
     });
@@ -413,21 +397,7 @@ const getStatPerYear = async (req, res) => {
         }
       })
     );
-
-    const suiviByProduct = await suivis.findAll({
-      attributes: [
-        [sequelize.literal("YEAR(suivis.createdAt)"), "year"],
-        [sequelize.literal("MONTH(suivis.createdAt)"), "month"],
-        [sequelize.fn("COUNT", sequelize.col("productId")), "count"],
-        "productId",
-      ],
-      include: [
-        {
-          model: products,
-        },
-      ],
-      group: ["productId", "year", "month"],
-    });
+    const suiviByProduct = await getSuivisByProductPerMonth();
 
     res.json({
       success: true,
