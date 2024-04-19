@@ -75,6 +75,9 @@ class FileHandler {
   createFile(fileName, data, ext, filePath, type) {
     let name, fileDir, location;
     const date = `-${this.getDate()}.`;
+    if(!fs.existsSync(filePath)){
+      fs.mkdirSync(filePath)
+    }
     if (type == "tmpApp") {
       name = fileName + "." + ext;
       fileDir = filePath;
