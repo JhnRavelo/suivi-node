@@ -165,10 +165,10 @@ const uploadImageSuivi = async (req, res, addedSuivi, productId) => {
     const result = await addedSuivi.save();
 
     if (!result) return res.json({ success: false });
-    const { allSuivis, success, statProducts, years } =
+    const { allSuivis, success, statProducts, years, statProblems } =
       await getSuivisByProduct(suivis, users, productId, problems);
     if (!success) return res.json({ success });
-    res.json({ success, suivis: allSuivis, statProducts, years });
+    res.json({ success, suivis: allSuivis, statProducts, years, statProblems });
   } catch (error) {
     res.json({ success: false });
     console.log("uploadImageSuivi", error);
@@ -227,11 +227,11 @@ const updateUpload = async (
     const result = await updatedUpload.save();
 
     if (!result) return res.json({ success: false });
-    const { allSuivis, success, statProducts, years } =
+    const { allSuivis, success, statProducts, years, statProblems } =
       await getSuivisByProduct(suivis, users, productId, problems);
 
     if (!success) return res.json({ success });
-    res.json({ success, suivis: allSuivis, years, statProducts });
+    res.json({ success, suivis: allSuivis, years, statProducts, statProblems });
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR updateUpload", error);

@@ -198,25 +198,14 @@ const getAllUsers = async (req, res) => {
     if (!allUsers) return res.json({ success: false });
     const finalUsers = allUsers.map((item) => {
       let value = item.dataValues;
-      if (value.refreshToken) {
-        return {
-          id: value.id,
-          name: value.name,
-          email: value.email,
-          phone: value.phone,
-          createdAt: value.createdAt,
-          connected: true,
-        };
-      } else {
-        return {
-          id: value.id,
-          name: value.name,
-          email: value.email,
-          phone: value.phone,
-          createdAt: value.createdAt,
-          connected: false,
-        };
-      }
+      return {
+        id: value.id,
+        name: value.name,
+        email: value.email,
+        phone: value.phone,
+        createdAt: value.createdAt,
+        connected: value?.refreshToken ? true : false,
+      };
     });
     res.json({ success: true, users: finalUsers });
   } catch (error) {
@@ -286,10 +275,10 @@ const updateProfile = async (req, res) => {
     });
     if (!user) return res.json({ success: false });
     if (user.avatar) {
-      fileHandler.deleteFileFromDatabase(user.avatar, avatarPath, "avatar")
+      fileHandler.deleteFileFromDatabase(user.avatar, avatarPath, "avatar");
     }
     if (req.files.length > 0) {
-      const location = await fileHandler.createImage(req, avatarPath)
+      const location = await fileHandler.createImage(req, avatarPath);
       user.avatar = location;
     }
     if (password) user.password = await bcrypt.hash(password, 10);
