@@ -7,6 +7,7 @@ const getSuivis = async (
     include: [
       { model: products, include: [{ model: productTypes }] },
     ],
+    order: [["createdAt", "DESC"]]
   });
 
   if (!allSuivis) return false;

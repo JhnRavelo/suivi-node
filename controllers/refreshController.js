@@ -6,7 +6,6 @@ const refresh = async (req, res) => {
     const { refreshToken } = await req.body;
 
     if (!refreshToken) return res.sendStatus(403);
-
     const user = await users.findOne({
       where: {
         refreshToken: refreshToken,
@@ -19,19 +18,20 @@ const refresh = async (req, res) => {
         process.env.REFRESH_TOKEN,
         async (err, decoded) => {
           if (err) {
-            console.log("ERROR HACKED USER REFRESH", err)
+            console.log("ERROR HACKED USER REFRESH", err);
           }
-          const hackedUser = await users.findOne({
-            where: {
-              id: decoded?.id,
-            },
-          });
 
-          hackedUser.refreshToken = "";
-          await hackedUser.save();
+          if (decoded?.id) {
+            const hackedUser = await users.findOne({
+              where: {
+                id: decoded.id,
+              },
+            });
+            hackedUser.refreshToken = "";
+            await hackedUser.save();
+          }
         }
       );
-
       return res.sendStatus(403);
     }
 
@@ -44,13 +44,11 @@ const refresh = async (req, res) => {
           await user.save();
         }
 
-        if (err || user.id !== decoded.id) return res.sendStatus(403);
-
+        if (err || user.id !== decoded?.id) return res.sendStatus(403);
         let id = user.id,
           role = user.role,
           newRefreshToken = users.prototype.generateRefreshToken(id),
           accessToken = users.prototype.generateToken(id, role);
-
         user.refreshToken = newRefreshToken;
         await user.save();
         res.json({
@@ -77,7 +75,6 @@ const handleRefreshToken = async (req, res) => {
       sameSite: "None",
       secure: true,
     });
-
     const user = await users.findOne({
       where: {
         refreshToken: refreshToken,
@@ -90,19 +87,21 @@ const handleRefreshToken = async (req, res) => {
         process.env.REFRESH_TOKEN,
         async (err, decoded) => {
           if (err) {
-            return res.sendStatus(403);
+            console.log("ERROR HACKED USER", err);
           }
-          const hackedUser = await users.findOne({
-            where: {
-              id: decoded?.id,
-            },
-          });
 
-          hackedUser.refreshToken = "";
-          await hackedUser.save();
+          if (decoded?.id) {
+            const hackedUser = await users.findOne({
+              where: {
+                id: decoded.id,
+              },
+            });
+
+            hackedUser.refreshToken = "";
+            await hackedUser.save();
+          }
         }
       );
-
       return res.sendStatus(403);
     }
 
@@ -115,16 +114,13 @@ const handleRefreshToken = async (req, res) => {
           await user.save();
         }
 
-        if (err || user.id !== decoded.id) return res.sendStatus(403);
-
+        if (err || user.id !== decoded?.id) return res.sendStatus(403);
         const id = user.id,
           role = user.role,
           newRefreshToken = users.prototype.generateRefreshToken(id),
           accessToken = users.prototype.generateToken(id, role);
-
         user.refreshToken = newRefreshToken;
         await user.save();
-
         res.cookie("jwt_ea_suivi", newRefreshToken, {
           httpOnly: true,
           sameSite: "None",
