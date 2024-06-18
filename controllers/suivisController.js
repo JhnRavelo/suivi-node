@@ -19,18 +19,7 @@ const fileHandler = new FileHandler();
 
 const getByProduct = async (req, res) => {
   try {
-    const { email, id } = await req.body;
-
-    if (!email || !id) return res.json({ success: false });
-    const isEmail = await users.findOne({
-      where: {
-        email: {
-          [Op.eq]: email,
-        },
-      },
-    });
-
-    if (!isEmail) return res.json({ success: false });
+    const { id } = await req.body;
     const { allSuivis, years, statProducts, success, statProblems } =
       await getSuivisByProduct(suivis, users, id, problems);
 

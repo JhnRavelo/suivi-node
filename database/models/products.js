@@ -24,11 +24,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     client: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     chantier: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
   });
 

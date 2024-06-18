@@ -23,7 +23,7 @@ const addProduct = async (req, res) => {
       });
 
       if (!productAdded) return res.json({ success: false });
-      await getAllProducts(req, res)
+      await getAllProducts(req, res);
     } else {
       productAdded = await products.create({
         productTypeId: type,
@@ -49,7 +49,7 @@ const getAllProducts = async (req, res) => {
   try {
     const allProducts = await products.findAll();
 
-  if (!allProducts) return res.json({ success: false });
+    if (!allProducts) return res.json({ success: false });
     res.json({ success: true, products: allProducts });
   } catch (error) {
     console.log("ERROR GET ALL PRODUCT", error);
@@ -72,7 +72,7 @@ const deleteProduct = async (req, res) => {
     const result = await deletedProduct.destroy();
 
     if (!result) return res.json({ success: false });
-    await getAllProducts(req, res)
+    await getAllProducts(req, res);
   } catch (error) {
     console.log("ERROR DELETE PRODUCT", error);
   }
@@ -130,7 +130,7 @@ const updateProduct = async (req, res) => {
     result = await updatedProduct.save();
 
     if (!result) return res.json({ success: false });
-    await getAllProducts(req, res)
+    await getAllProducts(req, res);
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR UPDATE PRODUCT", error);

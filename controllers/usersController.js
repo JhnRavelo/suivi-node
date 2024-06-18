@@ -73,7 +73,11 @@ const userRead = async (req, res) => {
     });
 
     if (!user) return res.json({ success: false });
-    res.json({ success: true, name: user.name, email: user.email });
+    res.json({
+      success: true,
+      name: user.name,
+      email: user.email,
+    });
   } catch (error) {
     res.json({ success: false });
     console.log("ERROR LOGIN READ", error);
@@ -210,7 +214,7 @@ const getAllUsers = async (req, res) => {
     res.json({ success: true, users: finalUsers });
   } catch (error) {
     res.json({ success: false });
-    console.log("ERROR GETALLUSERS", error);
+    console.log("ERROR GET ALL USERS", error);
   }
 };
 
@@ -232,7 +236,7 @@ const addUser = async (req, res) => {
     await getAllUsers(req, res);
   } catch (error) {
     res.json({ success: false });
-    console.log("ERROR ADDUSER", error);
+    console.log("ERROR ADD USER", error);
   }
 };
 
@@ -259,7 +263,7 @@ const updateUser = async (req, res) => {
     await getAllUsers(req, res);
   } catch (error) {
     res.json({ success: false });
-    console.log("ERROR UPDATEUSER", error);
+    console.log("ERROR UPDATE USER", error);
   }
 };
 
@@ -319,7 +323,7 @@ const deleteUser = async (req, res) => {
     await getAllUsers(req, res);
   } catch (error) {
     res.json({ success: false });
-    console.log("ERROR DELETEUSER", error);
+    console.log("ERROR DELETE USER", error);
   }
 };
 
